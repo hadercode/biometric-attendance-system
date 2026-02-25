@@ -17,6 +17,12 @@ namespace LectorHuellas.Services
         bool IsSimulated { get; }
 
         /// <summary>
+        /// Event fired during enrollment/identification with status messages
+        /// (e.g. "place finger", "remove finger")
+        /// </summary>
+        event Action<string>? OnStatusMessage;
+
+        /// <summary>
         /// Initialize the fingerprint device
         /// </summary>
         bool Initialize();

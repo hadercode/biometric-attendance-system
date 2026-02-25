@@ -102,20 +102,20 @@ namespace LectorHuellas.ViewModels
 
             try
             {
-                // Get all employees with templates for SDK identification
-                var employees = await _attendanceService.GetEmployeesWithTemplatesAsync();
-                if (employees.Count == 0)
+                // Get ALL templates (multi-finger + legacy) as flat list
+                var allTemplates = await _attendanceService.GetAllTemplatesForIdentificationAsync();
+                if (allTemplates.Count == 0)
                 {
                     StatusMessage = "⚠️ No hay empleados registrados con huellas.";
                     StatusMessageColor = "#FF7675";
                     return;
                 }
 
-                // Extract templates in order
+                // Extract template data in order
                 var templates = new System.Collections.Generic.List<byte[]>();
-                foreach (var emp in employees)
+                foreach (var (_, templateData) in allTemplates)
                 {
-                    templates.Add(emp.FingerprintTemplate!);
+                    templates.Add(templateData);
                 }
 
                 // SDK identification - captures finger and matches against all templates
@@ -131,7 +131,7 @@ namespace LectorHuellas.ViewModels
                     }
                 }
 
-                if (matchIndex < 0 || matchIndex >= employees.Count)
+                if (matchIndex < 0 || matchIndex >= allTemplates.Count)
                 {
                     StatusMessage = "⚠️ Huella no reconocida. Empleado no registrado.";
                     StatusMessageColor = "#FF7675";
@@ -141,7 +141,17 @@ namespace LectorHuellas.ViewModels
                     return;
                 }
 
-                var employee = employees[matchIndex];
+                // Map matched template index → employee ID
+                var matchedEmployeeId = allTemplates[matchIndex].employeeId;
+                var employee = await _attendanceService.GetEmployeeByIdAsync(matchedEmployeeId);
+
+                if (employee == null)
+                {
+                    StatusMessage = "⚠️ Empleado no encontrado.";
+                    StatusMessageColor = "#FF7675";
+                    ShowResult = true;
+                    return;
+                }
 
                 // Record attendance
                 var (record, type) = await _attendanceService.RecordAttendanceAsync(employee.Id);

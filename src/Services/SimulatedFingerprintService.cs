@@ -17,6 +17,7 @@ namespace LectorHuellas.Services
 
         public bool IsDeviceConnected => _initialized;
         public bool IsSimulated => true;
+        public event Action<string>? OnStatusMessage;
 
         public bool Initialize()
         {

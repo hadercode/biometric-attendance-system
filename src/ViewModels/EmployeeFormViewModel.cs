@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LectorHuellas.Converters;
@@ -13,9 +17,12 @@ namespace LectorHuellas.ViewModels
     {
         private readonly IFingerprintService _fingerprintService;
         private readonly AttendanceService _attendanceService;
+        private readonly Dispatcher _dispatcher;
 
         private int? _editingEmployeeId;
-        private byte[]? _capturedTemplate;
+
+        // Multi-finger enrollment storage
+        private readonly Dictionary<FingerType, byte[]> _enrolledFingers = new();
 
         [ObservableProperty]
         private string _fullName = "";
@@ -36,7 +43,7 @@ namespace LectorHuellas.ViewModels
         private bool _isCapturing;
 
         [ObservableProperty]
-        private string _captureStatus = "Sin huella capturada";
+        private string _captureStatus = "Seleccione un dedo y presione Capturar";
 
         [ObservableProperty]
         private string _captureStatusColor = "#8B949E";
@@ -47,12 +54,32 @@ namespace LectorHuellas.ViewModels
         [ObservableProperty]
         private string _validationMessage = "";
 
+        [ObservableProperty]
+        private FingerType? _selectedFinger;
+
+        [ObservableProperty]
+        private ObservableCollection<FingerType> _enrolledFingersList = new();
+
+        [ObservableProperty]
+        private int _enrolledCount;
+
         public event EventHandler? SaveCompleted;
 
         public EmployeeFormViewModel(IFingerprintService fingerprintService, AttendanceService attendanceService)
         {
             _fingerprintService = fingerprintService;
             _attendanceService = attendanceService;
+            _dispatcher = Dispatcher.CurrentDispatcher;
+
+            // Subscribe to real-time status messages from the SDK
+            _fingerprintService.OnStatusMessage += msg =>
+            {
+                _dispatcher.Invoke(() =>
+                {
+                    CaptureStatus = msg;
+                    CaptureStatusColor = "#FDCB6E";
+                });
+            };
         }
 
         public void Clear()
@@ -63,36 +90,60 @@ namespace LectorHuellas.ViewModels
             FormTitle = "Nuevo Empleado";
             IsEditing = false;
             HasFingerprint = false;
-            _capturedTemplate = null;
-            CaptureStatus = "Sin huella capturada";
+            _enrolledFingers.Clear();
+            EnrolledFingersList = new ObservableCollection<FingerType>();
+            EnrolledCount = 0;
+            SelectedFinger = null;
+            CaptureStatus = "Seleccione un dedo y presione Capturar";
             CaptureStatusColor = "#8B949E";
             FingerprintImage = null;
             ValidationMessage = "";
         }
 
-        public void LoadEmployee(Employee employee)
+        public async void LoadEmployee(Employee employee)
         {
             _editingEmployeeId = employee.Id;
             FullName = employee.FullName;
             DocumentId = employee.DocumentId;
             FormTitle = "Editar Empleado";
             IsEditing = true;
-            HasFingerprint = employee.FingerprintTemplate != null;
-            _capturedTemplate = employee.FingerprintTemplate;
+            FingerprintImage = null;
+            ValidationMessage = "";
 
-            if (HasFingerprint)
+            // Load existing fingerprints
+            _enrolledFingers.Clear();
+            var fingerprints = await _attendanceService.GetEmployeeFingerprintsAsync(employee.Id);
+            foreach (var fp in fingerprints)
             {
-                CaptureStatus = "✅ Huella registrada";
+                _enrolledFingers[fp.FingerType] = fp.TemplateData;
+            }
+
+            // Also check legacy single template
+            if (_enrolledFingers.Count == 0 && employee.FingerprintTemplate != null)
+            {
+                _enrolledFingers[FingerType.RightIndex] = employee.FingerprintTemplate;
+            }
+
+            RefreshEnrolledUI();
+            SelectedFinger = null;
+
+            if (_enrolledFingers.Count > 0)
+            {
+                CaptureStatus = $"✅ {_enrolledFingers.Count} huella(s) registrada(s)";
                 CaptureStatusColor = "#00B894";
             }
             else
             {
-                CaptureStatus = "Sin huella capturada";
+                CaptureStatus = "Seleccione un dedo y presione Capturar";
                 CaptureStatusColor = "#8B949E";
             }
+        }
 
-            FingerprintImage = null;
-            ValidationMessage = "";
+        private void RefreshEnrolledUI()
+        {
+            EnrolledFingersList = new ObservableCollection<FingerType>(_enrolledFingers.Keys.OrderBy(f => (int)f));
+            EnrolledCount = _enrolledFingers.Count;
+            HasFingerprint = _enrolledFingers.Count > 0;
         }
 
         [RelayCommand]
@@ -100,45 +151,49 @@ namespace LectorHuellas.ViewModels
         {
             if (IsCapturing) return;
 
+            if (!SelectedFinger.HasValue)
+            {
+                ValidationMessage = "Debe seleccionar un dedo primero.";
+                return;
+            }
+
             IsCapturing = true;
-            CaptureStatus = "⏳ Coloque el dedo en el lector... (enrollment SDK)";
+            var finger = SelectedFinger.Value;
+            CaptureStatus = $"⏳ Enrollment {finger.ToDisplayName()} — Coloque el dedo en el lector...";
             CaptureStatusColor = "#FDCB6E";
             ValidationMessage = "";
 
             try
             {
-                Console.WriteLine("UI: Iniciando enrollment de huella...");
+                Console.WriteLine($"UI: Enrollment de {finger.ToDisplayName()}...");
                 var (imageData, template) = await _fingerprintService.EnrollFingerprintAsync();
 
                 if (template == null || imageData == null)
                 {
-                    CaptureStatus = "❌ No se pudo registrar la huella. Revise la consola.";
+                    CaptureStatus = $"❌ No se pudo registrar {finger.ToDisplayName()}. Intente de nuevo.";
                     CaptureStatusColor = "#FF7675";
-                    Console.WriteLine("UI: EnrollFingerprintAsync retornó null.");
                     return;
                 }
 
-                Console.WriteLine($"UI: Template recibido ({template.Length} bytes). Imagen: {imageData.Length} bytes.");
-
-                // Display image
+                // Show preview
                 var (w, h) = _fingerprintService.GetImageSize();
                 if (w > 0 && h > 0 && imageData.Length >= w * h)
                 {
                     FingerprintImage = FingerprintImageConverter.CreateBitmapFromGrayscale(imageData, w, h);
                 }
 
-                // Store the proper SDK template
-                _capturedTemplate = template;
-                HasFingerprint = true;
-                CaptureStatus = "✅ Huella registrada correctamente (template SDK)";
+                // Store for this finger
+                _enrolledFingers[finger] = template;
+                RefreshEnrolledUI();
+
+                CaptureStatus = $"✅ {finger.ToDisplayName()} registrado — {EnrolledCount} huella(s) total";
                 CaptureStatusColor = "#00B894";
-                Console.WriteLine("UI: ✅ Enrollment completado exitosamente.");
+                Console.WriteLine($"UI: ✅ {finger.ToDisplayName()} enrollado ({template.Length} bytes).");
             }
             catch (Exception ex)
             {
                 CaptureStatus = $"❌ Error: {ex.Message}";
                 CaptureStatusColor = "#FF7675";
-                Console.WriteLine($"UI: ❌ Excepción en enrollment: {ex}");
             }
             finally
             {
@@ -147,9 +202,23 @@ namespace LectorHuellas.ViewModels
         }
 
         [RelayCommand]
+        private void RemoveFinger()
+        {
+            if (!SelectedFinger.HasValue) return;
+            var finger = SelectedFinger.Value;
+
+            if (_enrolledFingers.Remove(finger))
+            {
+                RefreshEnrolledUI();
+                CaptureStatus = $"🗑️ {finger.ToDisplayName()} eliminado — {EnrolledCount} huella(s) total";
+                CaptureStatusColor = "#8B949E";
+                FingerprintImage = null;
+            }
+        }
+
+        [RelayCommand]
         private async Task Save()
         {
-            // Validation
             if (string.IsNullOrWhiteSpace(FullName))
             {
                 ValidationMessage = "El nombre es requerido.";
@@ -160,9 +229,9 @@ namespace LectorHuellas.ViewModels
                 ValidationMessage = "La cédula es requerida.";
                 return;
             }
-            if (_capturedTemplate == null)
+            if (_enrolledFingers.Count == 0)
             {
-                ValidationMessage = "Debe capturar la huella del empleado.";
+                ValidationMessage = "Debe registrar al menos una huella.";
                 return;
             }
 
@@ -170,15 +239,24 @@ namespace LectorHuellas.ViewModels
 
             try
             {
+                // Use the first enrolled finger as the legacy template
+                byte[] primaryTemplate = _enrolledFingers.Values.First();
+
                 if (IsEditing && _editingEmployeeId.HasValue)
                 {
                     await _attendanceService.UpdateEmployeeAsync(
-                        _editingEmployeeId.Value, FullName.Trim(), DocumentId.Trim(), _capturedTemplate);
+                        _editingEmployeeId.Value, FullName.Trim(), DocumentId.Trim(), primaryTemplate);
+
+                    // Save all fingerprints
+                    await _attendanceService.SaveEmployeeFingerprintsAsync(_editingEmployeeId.Value, _enrolledFingers);
                 }
                 else
                 {
-                    await _attendanceService.RegisterEmployeeAsync(
-                        FullName.Trim(), DocumentId.Trim(), _capturedTemplate);
+                    var employee = await _attendanceService.RegisterEmployeeAsync(
+                        FullName.Trim(), DocumentId.Trim(), primaryTemplate);
+
+                    // Save all fingerprints
+                    await _attendanceService.SaveEmployeeFingerprintsAsync(employee.Id, _enrolledFingers);
                 }
 
                 SaveCompleted?.Invoke(this, EventArgs.Empty);

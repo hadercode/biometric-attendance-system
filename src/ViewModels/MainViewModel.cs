@@ -31,6 +31,7 @@ namespace LectorHuellas.ViewModels
         public EmployeeListViewModel EmployeeListVM { get; }
         public EmployeeFormViewModel EmployeeFormVM { get; }
         public AttendanceReportViewModel AttendanceReportVM { get; }
+        public SettingsViewModel SettingsVM { get; }
 
         public MainViewModel(IFingerprintService fingerprintService, AttendanceService attendanceService)
         {
@@ -41,6 +42,7 @@ namespace LectorHuellas.ViewModels
             EmployeeListVM = new EmployeeListViewModel(attendanceService);
             EmployeeFormVM = new EmployeeFormViewModel(fingerprintService, attendanceService);
             AttendanceReportVM = new AttendanceReportViewModel(attendanceService);
+            SettingsVM = new SettingsViewModel();
 
             IsDeviceConnected = fingerprintService.IsDeviceConnected;
             IsSimulated = fingerprintService.IsSimulated;

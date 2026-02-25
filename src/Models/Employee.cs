@@ -13,5 +13,6 @@ namespace LectorHuellas.Models
         public bool IsActive { get; set; } = true;
 
         public ICollection<AttendanceRecord> AttendanceRecords { get; set; } = new List<AttendanceRecord>();
+        public ICollection<FingerprintTemplate> Fingerprints { get; set; } = new List<FingerprintTemplate>();
     }
 }

@@ -28,6 +28,7 @@ namespace LectorHuellas.Services
 
         public bool IsDeviceConnected => _initialized;
         public bool IsSimulated => false;
+        public event Action<string>? OnStatusMessage;
 
         public bool Initialize()
         {
@@ -111,9 +112,11 @@ namespace LectorHuellas.Services
                 {
                     case FtrScanApi.FTR_SIGNAL_TOUCH_SENSOR:
                         Console.WriteLine("FTRAPI: 👆 Coloque el dedo en el lector...");
+                        OnStatusMessage?.Invoke("👆 Coloque el dedo en el lector...");
                         break;
                     case FtrScanApi.FTR_SIGNAL_TAKE_OFF:
                         Console.WriteLine("FTRAPI: ✋ Retire el dedo del lector...");
+                        OnStatusMessage?.Invoke("✋ Retire el dedo del lector...");
                         break;
                     case FtrScanApi.FTR_SIGNAL_FAKE_SOURCE:
                         Console.WriteLine("FTRAPI: ⚠️ Huella falsa detectada.");

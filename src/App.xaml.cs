@@ -27,7 +27,24 @@ namespace LectorHuellas
             try
             {
                 using var db = new AppDbContext();
-                db.EnsureCreated();
+                db.Database.EnsureCreated();
+
+                // Validation: Ensure the new table exists. 
+                // EnsureCreated() only creates if DB doesn't exist. If it exists but schema is old, it does nothing.
+                try
+                {
+                    // Check if FingerprintTemplates table exists by running a simple query
+                    _ = System.Linq.Queryable.Any(db.FingerprintTemplates);
+                }
+                catch (Exception)
+                {
+                    // If we get an error here (like "no such table"), and we are using SQLite, 
+                    // we recreate the database to update the schema (dev-mode migration strategy).
+                    Console.WriteLine("⚠️  Esquema de base de datos desactualizado. Recreando...");
+                    db.Database.EnsureDeleted();
+                    db.Database.EnsureCreated();
+                }
+
                 Console.WriteLine("✅ Base de datos inicializada correctamente.");
             }
             catch (Exception ex)

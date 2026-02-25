@@ -61,6 +61,25 @@ namespace LectorHuellas.ViewModels
         {
             if (SelectedEmployee == null) return;
 
+            // Check for attendance history first
+            var hasHistory = await _attendanceService.HasAttendanceRecordsAsync(SelectedEmployee.Id);
+
+            if (hasHistory)
+            {
+                var deactivateResult = System.Windows.MessageBox.Show(
+                    $"{SelectedEmployee.FullName} tiene historial de asistencia y no puede ser eliminado.\n\n¿Desea desactivar al empleado en su lugar?",
+                    "No se puede eliminar",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Information);
+
+                if (deactivateResult == System.Windows.MessageBoxResult.Yes)
+                {
+                    await _attendanceService.DeactivateEmployeeAsync(SelectedEmployee.Id);
+                    await Refresh();
+                }
+                return;
+            }
+
             var result = System.Windows.MessageBox.Show(
                 $"¿Está seguro de eliminar a {SelectedEmployee.FullName}?",
                 "Confirmar eliminación",

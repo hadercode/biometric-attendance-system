@@ -9,22 +9,49 @@ namespace LectorHuellas.Data
     {
         public DbSet<Employee> Employees { get; set; } = null!;
         public DbSet<AttendanceRecord> AttendanceRecords { get; set; } = null!;
+        public DbSet<FingerprintTemplate> FingerprintTemplates { get; set; } = null!;
 
-        private static string DbPath
+        private readonly DatabaseSettings? _settings;
+
+        /// <summary>
+        /// Default constructor — loads settings from dbsettings.json
+        /// </summary>
+        public AppDbContext()
         {
-            get
-            {
-                var folder = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "LectorHuellas");
-                Directory.CreateDirectory(folder);
-                return Path.Combine(folder, "attendance.db");
-            }
+            _settings = DatabaseSettings.Load();
+        }
+
+        /// <summary>
+        /// Constructor with explicit settings (used for test connection)
+        /// </summary>
+        public AppDbContext(DatabaseSettings settings)
+        {
+            _settings = settings;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
-            options.UseSqlite($"Data Source={DbPath}");
+            if (options.IsConfigured) return;
+
+            var settings = _settings ?? DatabaseSettings.Load();
+            var connectionString = settings.GetConnectionString();
+
+            switch (settings.Provider)
+            {
+                case "PostgreSQL":
+                    options.UseNpgsql(connectionString);
+                    break;
+                case "MySQL":
+                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                    break;
+                default: // SQLite
+                    // Ensure directory exists for SQLite
+                    var dir = Path.GetDirectoryName(settings.GetSqlitePath());
+                    if (!string.IsNullOrEmpty(dir))
+                        Directory.CreateDirectory(dir);
+                    options.UseSqlite(connectionString);
+                    break;
+            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,6 +74,18 @@ namespace LectorHuellas.Data
                       .HasForeignKey(e => e.EmployeeId)
                       .OnDelete(DeleteBehavior.Cascade);
                 entity.HasIndex(e => e.Timestamp);
+            });
+
+            modelBuilder.Entity<FingerprintTemplate>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FingerType).HasConversion<string>();
+                entity.Property(e => e.TemplateData).IsRequired();
+                entity.HasOne(e => e.Employee)
+                      .WithMany(e => e.Fingerprints)
+                      .HasForeignKey(e => e.EmployeeId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => new { e.EmployeeId, e.FingerType }).IsUnique();
             });
         }
 

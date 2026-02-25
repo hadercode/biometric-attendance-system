@@ -79,6 +79,15 @@
                             <TextBlock Text="Reportes" VerticalAlignment="Center"/>
                         </StackPanel>
                     </RadioButton>
+
+                    <RadioButton Style="{StaticResource NavButton}"
+                                 IsChecked="{Binding CurrentPage, Converter={StaticResource StringMatchConverter}, ConverterParameter=Settings, Mode=OneWay}"
+                                 Command="{Binding NavigateToPageCommand}" CommandParameter="Settings">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Configuración" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </RadioButton>
                 </StackPanel>
 
                 <!-- Footer -->
@@ -114,6 +123,11 @@
             <views:AttendanceReportView DataContext="{Binding AttendanceReportVM}"
                                         Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
                                                      Converter={StaticResource PageVisConverter}, ConverterParameter=Reports}"/>
+
+            <!-- Settings -->
+            <views:SettingsView DataContext="{Binding SettingsVM}"
+                                Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
+                                             Converter={StaticResource PageVisConverter}, ConverterParameter=Settings}"/>
         </Grid>
     </Grid>
 </Window>
