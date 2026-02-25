@@ -1,0 +1,38 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.sln
+!*.sln.DotSettings.user
+
+# Rider
+.idea/
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+
+# SQLite databases
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Agent / AI files
+.gemini/
+.agent/
