@@ -64,23 +64,32 @@ dotnet run
 
 ## 🏗️ Arquitectura
 
+El proyecto utiliza una **Arquitectura Orientada a Funciones (Feature-Oriented Architecture)** para mejorar la mantenibilidad y escalabilidad.
+
 ```
 src/
-├── Converters/          # Conversión imagen grayscale → BitmapSource
-├── Data/                # Entity Framework + SQLite (AppDbContext)
-├── Interop/             # P/Invoke para FTRAPI.dll y ftrScanAPI.dll
-├── libs/                # DLLs nativas del SDK Futronic
-├── Models/              # Employee, AttendanceRecord
-├── Services/
-│   ├── IFingerprintService.cs     # Interfaz del servicio de huellas
-│   ├── FutronicService.cs         # Implementación real (FTRAPI.dll)
-│   ├── SimulatedFingerprintService.cs  # Simulador sin hardware
-│   └── AttendanceService.cs       # Lógica de asistencia
-├── ViewModels/          # MVVM ViewModels (CommunityToolkit.Mvvm)
-├── Views/               # WPF UserControls y páginas
-├── App.xaml.cs          # Punto de entrada, inicialización, diagnóstico
-└── LectorHuellas.csproj
+├── Core/                # Lógica de negocio y datos fundamental
+│   ├── Data/            # DBContext (Entity Framework)
+│   ├── Interop/         # P/Invoke SDK Futronic
+│   ├── Models/          # Entidades (Employee, AttendanceRecord)
+│   └── Services/        # Lógica central (AttendanceService, FutronicService)
+├── Shared/              # Recursos UI comunes
+│   ├── Converters/      # Convertidores XAML
+│   └── Resources/       # Estilos globales (Styles.xaml)
+├── Features/            # Módulos independientes por funcionalidad (View + ViewModel)
+│   ├── Dashboard/       # Pantalla principal y marcaje
+│   ├── Employees/       # Gestión de personal y HandSelector
+│   ├── Reports/         # Consultas de asistencia
+│   ├── Settings/        # Configuración de base de datos
+│   └── Main/            # Ventana principal y navegación
+├── App.xaml             # Configuración global y estilos
+└── MainWindow.xaml      # Contenedor principal de navegación
 ```
+
+### Principios Aplicados
+- **Vertical Slices**: El código de cada funcionalidad (Vista y ViewModel) vive junto.
+- **Layering**: Separación clara entre el núcleo del sistema (`Core`) y la interfaz de usuario.
+- **SOLID**: Mayor adhesión al principio de Responsabilidad Única.
 
 ### Flujo de Enrollment (Registro de Huella)
 1. `FTRInitialize()` → inicializa el SDK

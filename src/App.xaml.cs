@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
-using LectorHuellas.Data;
-using LectorHuellas.Interop;
-using LectorHuellas.Services;
-using LectorHuellas.ViewModels;
+using LectorHuellas.Core.Data;
+using LectorHuellas.Core.Services;
+using LectorHuellas.Core.Interop;
+using LectorHuellas.Features.Main;
 
 namespace LectorHuellas
 {

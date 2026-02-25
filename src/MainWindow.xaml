@@ -1,9 +1,12 @@
 ﻿<Window x:Class="LectorHuellas.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="clr-namespace:LectorHuellas.ViewModels"
-        xmlns:views="clr-namespace:LectorHuellas.Views"
-        xmlns:conv="clr-namespace:LectorHuellas.Converters"
+        xmlns:main="clr-namespace:LectorHuellas.Features.Main"
+        xmlns:dashboard="clr-namespace:LectorHuellas.Features.Dashboard"
+        xmlns:employees="clr-namespace:LectorHuellas.Features.Employees"
+        xmlns:reports="clr-namespace:LectorHuellas.Features.Reports"
+        xmlns:settings="clr-namespace:LectorHuellas.Features.Settings"
+        xmlns:conv="clr-namespace:LectorHuellas.Shared.Converters"
         Title="Lector de Huellas — Control de Asistencia"
         Width="1280" Height="800" MinWidth="1024" MinHeight="700"
         WindowStartupLocation="CenterScreen"
@@ -105,27 +108,27 @@
         <!-- ═══ Main Content ═══ -->
         <Grid Grid.Column="1">
             <!-- Dashboard -->
-            <views:DashboardView DataContext="{Binding DashboardVM}"
+            <dashboard:DashboardView DataContext="{Binding DashboardVM}"
                                  Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
-                                              Converter={StaticResource PageVisConverter}, ConverterParameter=Dashboard}"/>
+                                               Converter={StaticResource PageVisConverter}, ConverterParameter=Dashboard}"/>
 
             <!-- Employee List -->
-            <views:EmployeeListView DataContext="{Binding EmployeeListVM}"
+            <employees:EmployeeListView DataContext="{Binding EmployeeListVM}"
                                     Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
                                                  Converter={StaticResource PageVisConverter}, ConverterParameter=Employees}"/>
 
             <!-- Employee Form -->
-            <views:EmployeeFormView DataContext="{Binding EmployeeFormVM}"
+            <employees:EmployeeFormView DataContext="{Binding EmployeeFormVM}"
                                     Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
                                                  Converter={StaticResource PageVisConverter}, ConverterParameter=EmployeeForm}"/>
 
             <!-- Reports -->
-            <views:AttendanceReportView DataContext="{Binding AttendanceReportVM}"
+            <reports:AttendanceReportView DataContext="{Binding AttendanceReportVM}"
                                         Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
                                                      Converter={StaticResource PageVisConverter}, ConverterParameter=Reports}"/>
 
             <!-- Settings -->
-            <views:SettingsView DataContext="{Binding SettingsVM}"
+            <settings:SettingsView DataContext="{Binding SettingsVM}"
                                 Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
                                              Converter={StaticResource PageVisConverter}, ConverterParameter=Settings}"/>
         </Grid>

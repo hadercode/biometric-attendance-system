@@ -7,10 +7,10 @@ Historial detallado de issues encontrados y soluciones aplicadas durante el desa
 ## [v2.0.0] — 2026-02-25 — Multi-huella y Configuración de BD
 
 ### ✅ Nuevas Características
+- **Refactor Arquitectural**: Reorganización total a Arquitectura Orientada a Funciones (`Core`, `Shared`, `Features`).
 - **Multi-finger enrollment**: Registro de hasta 10 dedos con selector visual de manos.
 - **Feedback en tiempo real**: Mensajes de "Coloque/Retire el dedo" integrados desde el callback del SDK.
 - **Configuración de DB**: Soporte para SQLite (local), PostgreSQL y MySQL mediante ventana de configuración.
-- **Protección de datos**: Bloqueo de eliminación para empleados con historial de asistencia.
 - **Auto-migración**: Detección automática de esquema desactualizado y recreación de BD para SQLite.
 
 ### 🛠️ Correcciones Técnicas
