@@ -115,7 +115,7 @@
                     <DataGridTextColumn Header="Fecha" Binding="{Binding Timestamp, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120"/>
                     <DataGridTextColumn Header="Hora" Binding="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" Width="100"/>
                     <DataGridTextColumn Header="Empleado" Binding="{Binding Employee.FullName}" Width="*"/>
-                    <DataGridTextColumn Header="Cédula" Binding="{Binding Employee.DocumentId}" Width="140"/>
+                    <DataGridTextColumn Header="Código" Binding="{Binding Employee.Code}" Width="140"/>
                     <DataGridTemplateColumn Header="Tipo" Width="120">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

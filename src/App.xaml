@@ -17,6 +17,8 @@
             <conv:NotEmptyToVisibilityConverter x:Key="NotEmptyToVisConverter"/>
             <conv:HasValueConverter x:Key="HasValueConverter"/>
             <conv:BoolToTextConverter x:Key="BoolToTextConverter"/>
+            <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+            <conv:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

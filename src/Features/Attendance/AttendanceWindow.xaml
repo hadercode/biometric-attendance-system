@@ -1,0 +1,10 @@
+<Window x:Class="LectorHuellas.Features.Attendance.AttendanceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:attendance="clr-namespace:LectorHuellas.Features.Attendance"
+        Title="Lector de Huellas — Control de Asistencia" 
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BgDarkBrush}">
+    <attendance:AttendanceView DataContext="{Binding AttendanceVM}"/>
+</Window>

@@ -11,6 +11,7 @@ namespace LectorHuellas.Features.Reports
 {
     public partial class AttendanceReportViewModel : ObservableObject
     {
+        private readonly IEmployeeService _employeeService;
         private readonly AttendanceService _attendanceService;
 
         [ObservableProperty]
@@ -40,8 +41,9 @@ namespace LectorHuellas.Features.Reports
         [ObservableProperty]
         private bool _isLoading;
 
-        public AttendanceReportViewModel(AttendanceService attendanceService)
+        public AttendanceReportViewModel(IEmployeeService employeeService, AttendanceService attendanceService)
         {
+            _employeeService = employeeService;
             _attendanceService = attendanceService;
         }
 
@@ -51,11 +53,11 @@ namespace LectorHuellas.Features.Reports
             IsLoading = true;
             try
             {
-                // Load employee filter list
-                var empList = await _attendanceService.GetAllEmployeesAsync();
+                // Load employee filter list from EmployeeService
+                var empList = await _employeeService.GetAllEmployeesAsync();
                 Employees = new ObservableCollection<Employee>(empList);
 
-                // Load records
+                // Load records from AttendanceService
                 var records = await _attendanceService.GetAttendanceReportAsync(
                     DateFrom, DateTo, SelectedEmployee?.Id);
 

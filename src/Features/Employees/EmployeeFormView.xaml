@@ -6,6 +6,7 @@
 
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
@@ -21,26 +22,142 @@
                     <TextBlock Text="Información del Empleado" FontSize="16" FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
 
-                    <!-- Full Name -->
-                    <TextBlock Text="Nombre Completo" FontSize="12" FontWeight="Medium"
+                    <!-- Code (Cedula) -->
+                    <TextBlock Text="Código / Cédula" FontSize="12" FontWeight="Medium"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource ModernTextBox}"
-                             Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding Code, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding IsEditing, Converter={StaticResource InverseBoolConverter}}"
                              Margin="0,0,0,16"/>
 
-                    <!-- Document ID -->
-                    <TextBlock Text="Cédula de Identidad" FontSize="12" FontWeight="Medium"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                    <TextBox Style="{StaticResource ModernTextBox}"
-                             Text="{Binding DocumentId, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,16"/>
+                    <!-- Names -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Nombres" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox Style="{StaticResource ModernTextBox}"
+                                     Text="{Binding FirstNames, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Apellidos" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox Style="{StaticResource ModernTextBox}"
+                                     Text="{Binding LastNames, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
 
                     <!-- Position -->
-                    <TextBlock Text="Cargo / Puesto" FontSize="12" FontWeight="Medium"
+                    <TextBlock Text="Código Cargo (ccargo)" FontSize="12" FontWeight="Medium"
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource ModernTextBox}"
                              Text="{Binding Position, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,0,0,16"/>
+
+                    <!-- Contact & Info -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Dirección" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox Style="{StaticResource ModernTextBox}"
+                                     Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Teléfono" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox Style="{StaticResource ModernTextBox}"
+                                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Dates -->
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Fecha Nacimiento" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <DatePicker SelectedDate="{Binding BirthDate}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Fecha Ingreso" FontSize="12" FontWeight="Medium"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <DatePicker SelectedDate="{Binding HireDate}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Message -->
+                    <TextBlock Text="Mensaje Personalizado (Pantalla Asistencia)" FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <TextBox Style="{StaticResource ModernTextBox}"
+                             Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- Master Data Grid -->
+                    <Grid Grid.IsSharedSizeScope="True" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="16"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Gerencia -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Gerencia" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                        <ComboBox Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Managements}"
+                                  SelectedValue="{Binding ManagementId, Mode=TwoWay}"
+                                  SelectedValuePath="Code"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ModernComboBox}"/>
+
+                        <!-- Departamento -->
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Departamento" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                        <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Departments}"
+                                  SelectedValue="{Binding DepartmentId, Mode=TwoWay}"
+                                  SelectedValuePath="Code"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ModernComboBox}"/>
+
+                        <!-- Unidad -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Unidad" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                        <ComboBox Grid.Row="4" Grid.Column="0" ItemsSource="{Binding Units}"
+                                  SelectedValue="{Binding UnitId, Mode=TwoWay}"
+                                  SelectedValuePath="Code"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ModernComboBox}"/>
+
+                        <!-- Turno -->
+                        <TextBlock Grid.Row="3" Grid.Column="2" Text="Turno" FontSize="12" FontWeight="Medium"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                        <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{Binding Shifts}"
+                                  SelectedValue="{Binding ShiftId, Mode=TwoWay}"
+                                  SelectedValuePath="Code"
+                                  DisplayMemberPath="Description"
+                                  Style="{StaticResource ModernComboBox}"/>
+                    </Grid>
 
                     <!-- Photo Selection -->
                     <TextBlock Text="Foto del Empleado" FontSize="12" FontWeight="Medium"

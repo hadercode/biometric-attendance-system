@@ -16,25 +16,56 @@ namespace LectorHuellas.Features.Employees
     public partial class EmployeeFormViewModel : ObservableObject
     {
         private readonly IFingerprintService _fingerprintService;
+        private readonly IEmployeeService _employeeService;
+        private readonly ICommonService _commonService;
         private readonly AttendanceService _attendanceService;
         private readonly Dispatcher _dispatcher;
 
         private int? _editingEmployeeId;
 
-        // Multi-finger enrollment storage
         private readonly Dictionary<FingerType, byte[]> _enrolledFingers = new();
 
         [ObservableProperty]
-        private string _fullName = "";
+        private string _code = "";
 
         [ObservableProperty]
-        private string _documentId = "";
+        private string _firstNames = "";
 
         [ObservableProperty]
-        private string _position = "Empleado"; // New field
+        private string _lastNames = "";
 
         [ObservableProperty]
-        private string _photoPath = ""; // New field
+        private string _position = ""; 
+
+        [ObservableProperty]
+        private string _managementId = "";
+
+        [ObservableProperty]
+        private string _departmentId = "";
+
+        [ObservableProperty]
+        private string _unitId = "";
+
+        [ObservableProperty]
+        private string _shiftId = "";
+
+        [ObservableProperty]
+        private string _address = "";
+
+        [ObservableProperty]
+        private string _phone = "";
+
+        [ObservableProperty]
+        private DateTime? _birthDate;
+
+        [ObservableProperty]
+        private DateTime? _hireDate = DateTime.Now;
+
+        [ObservableProperty]
+        private string _message = "";
+
+        [ObservableProperty]
+        private string _photoPath = ""; 
 
         [ObservableProperty]
         private string _formTitle = "Nuevo Empleado";
@@ -69,15 +100,29 @@ namespace LectorHuellas.Features.Employees
         [ObservableProperty]
         private int _enrolledCount;
 
+        // Master Data Collections
+        [ObservableProperty]
+        private ObservableCollection<Management> _managements = new();
+
+        [ObservableProperty]
+        private ObservableCollection<Department> _departments = new();
+
+        [ObservableProperty]
+        private ObservableCollection<Unit> _units = new();
+
+        [ObservableProperty]
+        private ObservableCollection<Shift> _shifts = new();
+
         public event EventHandler? SaveCompleted;
 
-        public EmployeeFormViewModel(IFingerprintService fingerprintService, AttendanceService attendanceService)
+        public EmployeeFormViewModel(IFingerprintService fingerprintService, IEmployeeService employeeService, ICommonService commonService, AttendanceService attendanceService)
         {
             _fingerprintService = fingerprintService;
+            _employeeService = employeeService;
+            _commonService = commonService;
             _attendanceService = attendanceService;
             _dispatcher = Dispatcher.CurrentDispatcher;
 
-            // Subscribe to real-time status messages from the SDK
             _fingerprintService.OnStatusMessage += msg =>
             {
                 _dispatcher.Invoke(() =>
@@ -86,14 +131,54 @@ namespace LectorHuellas.Features.Employees
                     CaptureStatusColor = "#FDCB6E";
                 });
             };
+
+            // Load master data
+            _ = InitializeAsync();
+        }
+
+        private async Task InitializeAsync()
+        {
+            Console.WriteLine("DEBUG: EmployeeFormViewModel.InitializeAsync starting...");
+            try
+            {
+                var mgrs = await _commonService.GetManagementsAsync();
+                var dpts = await _commonService.GetDepartmentsAsync();
+                var units = await _commonService.GetUnitsAsync();
+                var shifts = await _commonService.GetShiftsAsync();
+
+                Console.WriteLine($"DEBUG: Data loaded - Mgrs: {mgrs.Count}, Dpts: {dpts.Count}, Units: {units.Count}, Shifts: {shifts.Count}");
+
+                _dispatcher.Invoke(() => {
+                    Managements = new ObservableCollection<Management>(mgrs);
+                    Departments = new ObservableCollection<Department>(dpts);
+                    Units = new ObservableCollection<Unit>(units);
+                    Shifts = new ObservableCollection<Shift>(shifts);
+                    Console.WriteLine("DEBUG: ObservableCollections updated in ViewModel.");
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DEBUG: Error initializing form data: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error initializing form data: {ex.Message}");
+            }
         }
 
         public void Clear()
         {
             _editingEmployeeId = null;
-            FullName = "";
-            DocumentId = "";
-            Position = "Empleado";
+            Code = "";
+            FirstNames = "";
+            LastNames = "";
+            Position = "";
+            ManagementId = "";
+            DepartmentId = "";
+            UnitId = "";
+            ShiftId = "";
+            Address = "";
+            Phone = "";
+            BirthDate = null;
+            HireDate = DateTime.Now;
+            Message = "";
             PhotoPath = "";
             FormTitle = "Nuevo Empleado";
             IsEditing = false;
@@ -111,27 +196,30 @@ namespace LectorHuellas.Features.Employees
         public async void LoadEmployee(Employee employee)
         {
             _editingEmployeeId = employee.Id;
-            FullName = employee.FullName;
-            DocumentId = employee.DocumentId;
-            Position = employee.Position;
-            PhotoPath = employee.PhotoPath;
+            Code = employee.Code;
+            FirstNames = employee.FirstNames;
+            LastNames = employee.LastNames;
+            Position = employee.PositionId;
+            ManagementId = employee.ManagementId;
+            DepartmentId = employee.DepartmentId;
+            UnitId = employee.UnitId;
+            ShiftId = employee.ShiftId;
+            Address = employee.Address;
+            Phone = employee.Phone;
+            BirthDate = employee.BirthDate;
+            HireDate = employee.HireDate;
+            Message = employee.Message;
+            PhotoPath = employee.PhotoPath ?? "";
             FormTitle = "Editar Empleado";
             IsEditing = true;
             FingerprintImage = null;
             ValidationMessage = "";
 
-            // Load existing fingerprints
             _enrolledFingers.Clear();
-            var fingerprints = await _attendanceService.GetEmployeeFingerprintsAsync(employee.Id);
+            var fingerprints = await _employeeService.GetEmployeeFingerprintsAsync(employee.Id);
             foreach (var fp in fingerprints)
             {
                 _enrolledFingers[fp.FingerType] = fp.TemplateData;
-            }
-
-            // Also check legacy single template
-            if (_enrolledFingers.Count == 0 && employee.FingerprintTemplate != null)
-            {
-                _enrolledFingers[FingerType.RightIndex] = employee.FingerprintTemplate;
             }
 
             RefreshEnrolledUI();
@@ -175,7 +263,6 @@ namespace LectorHuellas.Features.Employees
 
             try
             {
-                Console.WriteLine($"UI: Enrollment de {finger.ToDisplayName()}...");
                 var (imageData, template) = await _fingerprintService.EnrollFingerprintAsync();
 
                 if (template == null || imageData == null)
@@ -185,20 +272,17 @@ namespace LectorHuellas.Features.Employees
                     return;
                 }
 
-                // Show preview
                 var (w, h) = _fingerprintService.GetImageSize();
                 if (w > 0 && h > 0 && imageData.Length >= w * h)
                 {
                     FingerprintImage = FingerprintImageConverter.CreateBitmapFromGrayscale(imageData, w, h);
                 }
 
-                // Store for this finger
                 _enrolledFingers[finger] = template;
                 RefreshEnrolledUI();
 
                 CaptureStatus = $"✅ {finger.ToDisplayName()} registrado — {EnrolledCount} huella(s) total";
                 CaptureStatusColor = "#00B894";
-                Console.WriteLine($"UI: ✅ {finger.ToDisplayName()} enrollado ({template.Length} bytes).");
             }
             catch (Exception ex)
             {
@@ -244,14 +328,19 @@ namespace LectorHuellas.Features.Employees
         [RelayCommand]
         private async Task Save()
         {
-            if (string.IsNullOrWhiteSpace(FullName))
+            if (string.IsNullOrWhiteSpace(Code))
             {
-                ValidationMessage = "El nombre es requerido.";
+                ValidationMessage = "El código (cedula) es requerido.";
                 return;
             }
-            if (string.IsNullOrWhiteSpace(DocumentId))
+            if (string.IsNullOrWhiteSpace(FirstNames))
             {
-                ValidationMessage = "La cédula es requerida.";
+                ValidationMessage = "Los nombres son requeridos.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(LastNames))
+            {
+                ValidationMessage = "Los apellidos son requeridos.";
                 return;
             }
             if (_enrolledFingers.Count == 0)
@@ -264,24 +353,49 @@ namespace LectorHuellas.Features.Employees
 
             try
             {
-                // Use the first enrolled finger as the legacy template
-                byte[] primaryTemplate = _enrolledFingers.Values.First();
-
                 if (IsEditing && _editingEmployeeId.HasValue)
                 {
-                    await _attendanceService.UpdateEmployeeAsync(
-                        _editingEmployeeId.Value, FullName.Trim(), DocumentId.Trim(), Position.Trim(), PhotoPath, primaryTemplate);
+                    await _employeeService.UpdateEmployeeAsync(
+                        _editingEmployeeId.Value, 
+                        Code.Trim(), 
+                        FirstNames.Trim(), 
+                        LastNames.Trim(), 
+                        Position.Trim(),
+                        ManagementId,
+                        DepartmentId,
+                        UnitId,
+                        ShiftId,
+                        PhotoPath,
+                        Address,
+                        Phone,
+                        BirthDate,
+                        HireDate,
+                        Message);
 
-                    // Save all fingerprints
-                    await _attendanceService.SaveEmployeeFingerprintsAsync(_editingEmployeeId.Value, _enrolledFingers);
+                    await _employeeService.SaveEmployeeFingerprintsAsync(_editingEmployeeId.Value, _enrolledFingers);
                 }
                 else
                 {
-                    var employee = await _attendanceService.RegisterEmployeeAsync(
-                        FullName.Trim(), DocumentId.Trim(), Position.Trim(), PhotoPath, primaryTemplate);
+                    byte[] primaryTemplate = _enrolledFingers.Values.First();
+                    
+                    var employee = await _employeeService.RegisterEmployeeAsync(
+                        Code.Trim(), 
+                        FirstNames.Trim(), 
+                        LastNames.Trim(), 
+                        Position.Trim(),
+                        ManagementId,
+                        DepartmentId,
+                        UnitId,
+                        ShiftId,
+                        PhotoPath, 
+                        Address,
+                        Phone,
+                        BirthDate,
+                        HireDate,
+                        Message,
+                        primaryTemplate);
 
-                    // Save all fingerprints
-                    await _attendanceService.SaveEmployeeFingerprintsAsync(employee.Id, _enrolledFingers);
+                    await _employeeService.SaveEmployeeFingerprintsAsync(employee.Id, _enrolledFingers);
                 }
 
                 SaveCompleted?.Invoke(this, EventArgs.Empty);

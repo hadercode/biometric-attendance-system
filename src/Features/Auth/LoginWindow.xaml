@@ -1,0 +1,11 @@
+<Window x:Class="LectorHuellas.Features.Auth.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:auth="clr-namespace:LectorHuellas.Features.Auth"
+        Title="Acceso Administrativo" 
+        Width="480" Height="650"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="{StaticResource BgDarkBrush}">
+    <auth:LoginView DataContext="{Binding LoginVM}"/>
+</Window>

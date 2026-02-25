@@ -19,9 +19,11 @@ namespace LectorHuellas.Features.Main
         Admin   // Dashboard & Management
     }
 
-    public partial class MainViewModel : ObservableObject
+    public partial class MainViewModel : ObservableObject, IDisposable
     {
         private readonly IFingerprintService _fingerprintService;
+        private readonly IEmployeeService _employeeService;
+        private readonly ICommonService _commonService;
         private readonly AttendanceService _attendanceService;
 
         [ObservableProperty]
@@ -55,18 +57,20 @@ namespace LectorHuellas.Features.Main
         public AttendanceReportViewModel AttendanceReportVM { get; }
         public SettingsViewModel SettingsVM { get; }
 
-        public MainViewModel(IFingerprintService fingerprintService, AttendanceService attendanceService)
+        public MainViewModel(IFingerprintService fingerprintService, IEmployeeService employeeService, ICommonService commonService, AttendanceService attendanceService)
         {
             _fingerprintService = fingerprintService;
+            _employeeService = employeeService;
+            _commonService = commonService;
             _attendanceService = attendanceService;
 
             // Initialize all child ViewModels
             AttendanceVM = new AttendanceViewModel(fingerprintService, attendanceService);
             LoginVM = new LoginViewModel();
-            DashboardVM = new DashboardViewModel(fingerprintService, attendanceService);
-            EmployeeListVM = new EmployeeListViewModel(attendanceService);
-            EmployeeFormVM = new EmployeeFormViewModel(fingerprintService, attendanceService);
-            AttendanceReportVM = new AttendanceReportViewModel(attendanceService);
+            DashboardVM = new DashboardViewModel(fingerprintService, employeeService, attendanceService);
+            EmployeeListVM = new EmployeeListViewModel(employeeService);
+            EmployeeFormVM = new EmployeeFormViewModel(fingerprintService, employeeService, commonService, attendanceService);
+            AttendanceReportVM = new AttendanceReportViewModel(employeeService, attendanceService);
             SettingsVM = new SettingsViewModel();
 
             IsDeviceConnected = fingerprintService.IsDeviceConnected;
@@ -149,6 +153,11 @@ namespace LectorHuellas.Features.Main
             CurrentMode = AppMode.Public;
             CurrentPage = "Attendance";
             _ = AttendanceVM.RefreshHistoryAsync();
+        }
+
+        public void Dispose()
+        {
+            AttendanceVM.Dispose();
         }
     }
 }

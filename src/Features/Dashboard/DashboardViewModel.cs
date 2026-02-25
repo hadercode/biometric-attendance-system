@@ -13,6 +13,7 @@ namespace LectorHuellas.Features.Dashboard
     public partial class DashboardViewModel : ObservableObject
     {
         private readonly IFingerprintService _fingerprintService;
+        private readonly IEmployeeService _employeeService;
         private readonly AttendanceService _attendanceService;
         private readonly DispatcherTimer _clockTimer;
 
@@ -52,9 +53,10 @@ namespace LectorHuellas.Features.Dashboard
         [ObservableProperty]
         private BitmapSource? _fingerprintImage;
 
-        public DashboardViewModel(IFingerprintService fingerprintService, AttendanceService attendanceService)
+        public DashboardViewModel(IFingerprintService fingerprintService, IEmployeeService employeeService, AttendanceService attendanceService)
         {
             _fingerprintService = fingerprintService;
+            _employeeService = employeeService;
             _attendanceService = attendanceService;
 
             _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -102,8 +104,8 @@ namespace LectorHuellas.Features.Dashboard
 
             try
             {
-                // Get ALL templates (multi-finger + legacy) as flat list
-                var allTemplates = await _attendanceService.GetAllTemplatesForIdentificationAsync();
+                // Get ALL templates from EmployeeService
+                var allTemplates = await _employeeService.GetAllTemplatesForIdentificationAsync();
                 if (allTemplates.Count == 0)
                 {
                     StatusMessage = "⚠️ No hay empleados registrados con huellas.";
@@ -111,17 +113,14 @@ namespace LectorHuellas.Features.Dashboard
                     return;
                 }
 
-                // Extract template data in order
                 var templates = new System.Collections.Generic.List<byte[]>();
                 foreach (var (_, templateData) in allTemplates)
                 {
                     templates.Add(templateData);
                 }
 
-                // SDK identification - captures finger and matches against all templates
                 var (matchIndex, imageData) = await _fingerprintService.IdentifyFingerprintAsync(templates);
 
-                // Show fingerprint image if available
                 if (imageData != null)
                 {
                     var (w, h) = _fingerprintService.GetImageSize();
@@ -141,9 +140,8 @@ namespace LectorHuellas.Features.Dashboard
                     return;
                 }
 
-                // Map matched template index → employee ID
                 var matchedEmployeeId = allTemplates[matchIndex].employeeId;
-                var employee = await _attendanceService.GetEmployeeByIdAsync(matchedEmployeeId);
+                var employee = await _employeeService.GetEmployeeByIdAsync(matchedEmployeeId);
 
                 if (employee == null)
                 {
@@ -154,7 +152,7 @@ namespace LectorHuellas.Features.Dashboard
                 }
 
                 // Record attendance
-                var (record, type) = await _attendanceService.RecordAttendanceAsync(employee.Id);
+                var (_, type) = await _attendanceService.RecordAttendanceAsync(employee.Id);
 
                 IdentifiedEmployeeName = employee.FullName;
                 AttendanceTypeBadge = type == AttendanceType.CheckIn ? "✅ ENTRADA" : "🚪 SALIDA";

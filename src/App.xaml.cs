@@ -7,34 +7,60 @@ using LectorHuellas.Core.Data;
 using LectorHuellas.Core.Services;
 using LectorHuellas.Core.Interop;
 using LectorHuellas.Features.Main;
+using LectorHuellas.Features.Attendance;
+using LectorHuellas.Features.Auth;
 
 namespace LectorHuellas
 {
     public partial class App : Application
     {
-        private IFingerprintService? _fingerprintService;
+        private AttendanceWindow? _attendanceWindow;
+        private LoginWindow? _loginWindow;
+        private AdminWindow? _adminWindow;
+        private IFingerprintService _fingerprintService = null!;
+        private IEmployeeService _employeeService = null!;
+        private ICommonService _commonService = null!;
+        private AttendanceService _attendanceService = null!;
+        private MainViewModel? _mainVM;
 
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
+            // Global exception handling
+            DispatcherUnhandledException += (s, args) =>
+            {
+                Console.WriteLine($"\a❌ ERROR FATAL (Dispatcher): {args.Exception.Message}");
+                Console.WriteLine(args.Exception.StackTrace);
+                MessageBox.Show($"Ocurrió un error inesperado:\n{args.Exception.Message}", 
+                    "Error Fatal", MessageBoxButton.OK, MessageBoxImage.Error);
+                args.Handled = true;
+                Shutdown();
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            {
+                var ex = args.ExceptionObject as Exception;
+                Console.WriteLine($"\a❌ ERROR FATAL (AppDomain): {ex?.Message}");
+                MessageBox.Show($"Error crítico del sistema:\n{ex?.Message}", 
+                    "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
+            };
+
             AllocConsole();
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.WriteLine("═══════════════════════════════════════════");
-            Console.WriteLine("  LectorHuellas - Diagnóstico de Inicio");
+            Console.WriteLine("  LectorHuellas - Control de Asistencia");
             Console.WriteLine("═══════════════════════════════════════════");
-            Console.WriteLine($"Directorio: {AppDomain.CurrentDomain.BaseDirectory}");
 
-            // Initialize database
             try
             {
+                Console.WriteLine("⏳ Inicializando base de datos...");
                 using var db = new AppDbContext();
+                // EnsureCreated() only creates if the DB doesn't exist. 
+                // For MySQL/Postgres we usually need manual schema patching if tables were added.
                 db.Database.EnsureCreated();
-
-                // Advanced Schema Sync (for dev/updates without migrations)
                 PatchDatabaseSchema(db);
-
-                Console.WriteLine("✅ Base de datos sincronizada.");
+                Console.WriteLine("✅ Base de datos lista.");
             }
             catch (Exception ex)
             {
@@ -45,15 +71,53 @@ namespace LectorHuellas
                 return;
             }
 
-            // Initialize fingerprint service
             _fingerprintService = CreateFingerprintService();
+            _employeeService = new EmployeeService();
+            _commonService = new CommonService();
+            
+            _attendanceService = new AttendanceService(_fingerprintService, _employeeService);
+            _mainVM = new MainViewModel(_fingerprintService, _employeeService, _commonService, _attendanceService);
+            
+            // ... rest of the setup ...
+            // Handle admin navigation
+            _mainVM.AttendanceVM.AdminAccessRequested += (s, ev) => 
+            {
+                _mainVM.AttendanceVM.StopScanning();
+                _loginWindow = new LoginWindow { DataContext = _mainVM };
+                _loginWindow.ShowDialog();
+                if (!_mainVM.IsAdminMode) _mainVM.AttendanceVM.StartScanning();
+            };
+            
+            _mainVM.LoginVM.LoginSuccess += (s, ev) => 
+            {
+                _loginWindow?.Close();
+                _attendanceWindow?.Hide();
+                _adminWindow = new AdminWindow { DataContext = _mainVM };
+                _adminWindow.Closed += (s2, ev2) => 
+                {
+                    if (_mainVM.IsPublicMode) _attendanceWindow?.Show();
+                    else Shutdown();
+                };
+                _adminWindow.Show();
+                _mainVM.NavigateToPageCommand.Execute("Dashboard");
+            };
 
-            var attendanceService = new AttendanceService(_fingerprintService);
-            var mainVM = new MainViewModel(_fingerprintService, attendanceService);
+            _mainVM.LoginVM.BackRequested += (s, ev) => _loginWindow?.Close();
 
-            var mainWindow = new MainWindow { DataContext = mainVM };
-            mainWindow.Show();
-            mainVM.NavigateToPageCommand.Execute("Dashboard");
+            _mainVM.PropertyChanged += (s, ev) => 
+            {
+                if (ev.PropertyName == nameof(MainViewModel.IsPublicMode) && _mainVM.IsPublicMode)
+                {
+                    _adminWindow?.Close();
+                    _attendanceWindow?.Show();
+                    _mainVM.AttendanceVM.StartScanning();
+                }
+            };
+
+            _attendanceWindow = new AttendanceWindow { DataContext = _mainVM };
+            _attendanceWindow.Show();
+            
+            Console.WriteLine("🚀 Sistema iniciado en Modo Asistencia.");
         }
 
         private IFingerprintService CreateFingerprintService()
@@ -106,6 +170,7 @@ namespace LectorHuellas
 
         protected override void OnExit(ExitEventArgs e)
         {
+            _mainVM?.Dispose();
             _fingerprintService?.Dispose();
             base.OnExit(e);
         }
@@ -114,29 +179,80 @@ namespace LectorHuellas
         {
             try
             {
-                // 1. Ensure new tables exist (EF.EnsureCreated handles the whole schema if empty)
-                // If tables already exist, ExecuteSqlRaw is needed for column additions.
-
                 var conn = db.Database.GetDbConnection();
                 if (conn.State != System.Data.ConnectionState.Open) conn.Open();
 
-                // 2. Add 'Position' if missing
-                TryAddColumn(db, "Employees", "Position", "TEXT NOT NULL DEFAULT 'Empleado'");
+                // Ensure support tables exist for the biometric system
+                string createAttendanceSql = @"
+                    CREATE TABLE IF NOT EXISTS attendance_records (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        employee_id INT NOT NULL,
+                        timestamp DATETIME NOT NULL,
+                        type VARCHAR(50) NOT NULL,
+                        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
                 
-                // 3. Add 'PhotoPath' if missing
-                TryAddColumn(db, "Employees", "PhotoPath", "TEXT NULL");
+                string createFingerprintsSql = @"
+                    CREATE TABLE IF NOT EXISTS fingerprint_templates (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        employee_id INT NOT NULL,
+                        finger_type VARCHAR(50) NOT NULL,
+                        template_data LONGBLOB NOT NULL,
+                        captured_at DATETIME NOT NULL,
+                        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+                        UNIQUE KEY uk_employee_finger (employee_id, finger_type)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
-                // 4. Ensure FingerprintTemplates table exists (manual safeguard)
-                // In some cases EnsureCreated skips tables if it thinks they already exist in a partial schema
-                try { _ = db.FingerprintTemplates.FirstOrDefault(); }
-                catch { 
-                    Console.WriteLine("⚠️  Tabla FingerprintTemplates no encontrada. Forzando creación...");
-                    // This is a last resort, usually EnsureCreated should handle this
-                }
+                string createDepartmentsSql = @"
+                    CREATE TABLE IF NOT EXISTS departamento (
+                        codigo VARCHAR(3) PRIMARY KEY,
+                        dpto VARCHAR(100) NOT NULL
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+                string createUnitsSql = @"
+                    CREATE TABLE IF NOT EXISTS unidad (
+                        codigo VARCHAR(3) PRIMARY KEY,
+                        unidad VARCHAR(100) NOT NULL
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+                string createManagementsSql = @"
+                    CREATE TABLE IF NOT EXISTS gerencia (
+                        codigo VARCHAR(3) PRIMARY KEY,
+                        gerencia VARCHAR(100) NOT NULL
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+                string createShiftsSql = @"
+                    CREATE TABLE IF NOT EXISTS turno (
+                        codigo VARCHAR(3) PRIMARY KEY,
+                        des VARCHAR(100) NOT NULL,
+                        limite VARCHAR(50),
+                        amanecer VARCHAR(50),
+                        tarde VARCHAR(50),
+                        sobre VARCHAR(50),
+                        holgura VARCHAR(50),
+                        descanso VARCHAR(50),
+                        duracion VARCHAR(50),
+                        horario VARCHAR(50),
+                        entrada VARCHAR(50)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+
+                db.Database.ExecuteSqlRaw(createAttendanceSql);
+                db.Database.ExecuteSqlRaw(createFingerprintsSql);
+                db.Database.ExecuteSqlRaw(createDepartmentsSql);
+                db.Database.ExecuteSqlRaw(createUnitsSql);
+                db.Database.ExecuteSqlRaw(createManagementsSql);
+                db.Database.ExecuteSqlRaw(createShiftsSql);
+
+                // Aggressive type conversion: If tables already existed with VARCHAR employee_id, convert them to INT
+                // This is needed because 'CREATE TABLE IF NOT EXISTS' doesn't update existing table structures.
+                try { db.Database.ExecuteSqlRaw("ALTER TABLE attendance_records MODIFY COLUMN employee_id INT NOT NULL;"); } catch { }
+                try { db.Database.ExecuteSqlRaw("ALTER TABLE fingerprint_templates MODIFY COLUMN employee_id INT NOT NULL;"); } catch { }
+                
+                Console.WriteLine("✅ Tablas de sistema (asistencia/huellas) verificadas y actualizadas.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"⚠️  Error al parchar esquema: {ex.Message}");
+                Console.WriteLine($"⚠️ Error al parchar esquema: {ex.Message}");
             }
         }
 

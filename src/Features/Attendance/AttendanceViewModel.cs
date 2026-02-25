@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,10 +12,19 @@ using LectorHuellas.Core.Services;
 
 namespace LectorHuellas.Features.Attendance
 {
-    public partial class AttendanceViewModel : ObservableObject
+    public partial class AttendanceViewModel : ObservableObject, IDisposable
     {
         private readonly IFingerprintService _fingerprintService;
         private readonly AttendanceService _attendanceService;
+        private readonly DispatcherTimer _clockTimer;
+        private CancellationTokenSource? _scanningCts;
+        private bool _disposed;
+
+        [ObservableProperty]
+        private string _currentTime = string.Empty;
+
+        [ObservableProperty]
+        private string _currentDate = string.Empty;
 
         [ObservableProperty]
         private string _statusMessage = "Coloque su dedo en el lector para marcar asistencia";
@@ -46,6 +56,113 @@ namespace LectorHuellas.Features.Attendance
         {
             _fingerprintService = fingerprintService;
             _attendanceService = attendanceService;
+            
+            // Setup Clock Timer
+            _clockTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _clockTimer.Tick += (s, e) => UpdateDateTime();
+            _clockTimer.Start();
+            UpdateDateTime();
+
+            // Start the automatic detection loop
+            StartScanning();
+        }
+
+        private void UpdateDateTime()
+        {
+            var now = DateTime.Now;
+            CurrentTime = now.ToString("HH:mm:ss");
+            CurrentDate = now.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-ES")).ToUpper();
+        }
+
+        public void StartScanning()
+        {
+            // Ensure any previous loop is stopped
+            StopScanning();
+            
+            _scanningCts = new CancellationTokenSource();
+            _ = RunScanningLoopAsync(_scanningCts.Token);
+        }
+
+        public void StopScanning()
+        {
+            _scanningCts?.Cancel();
+            _scanningCts = null;
+        }
+
+        private async Task RunScanningLoopAsync(CancellationToken ct)
+        {
+            StatusMessage = "Sistema listo. Coloque su dedo para marcar.";
+            StatusMessageColor = Colors.White;
+
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    // If we are currently showing a success card, we wait a bit before allowing another scan
+                    // or we can allow it immediately. For better UX, let's wait 1 second if a card is visible.
+                    if (ShowCard) await Task.Delay(1000, ct);
+
+                    // Reset state before new scan to avoid showing stale data
+                    IdentifiedEmployee = null;
+                    IsCapturing = true;
+                    
+                    // Note: IdentifyAndRecordAsync waits inside the SDK for a finger to be placed
+                    var result = await _attendanceService.IdentifyAndRecordAsync();
+
+                    if (result.HasValue)
+                    {
+                        ShowCard = false; // Briefly hide to trigger animation/refresh if needed
+                        IdentifiedEmployee = result.Value.Employee;
+                        AttendanceTypeBadge = result.Value.Type == AttendanceType.CheckIn ? "ENTRADA REGISTRADA" : "SALIDA REGISTRADA";
+                        StatusMessage = $"¡Hola {result.Value.Employee.FirstNames}!";
+                        StatusMessageColor = (Color)ColorConverter.ConvertFromString("#00B894"); // Success
+                        ShowCard = true;
+
+                        await RefreshHistoryAsync();
+
+                        // Auto-hide card after 4 seconds, but don't block the loop
+                        _ = ResetSuccessStateAfterDelay(4000);
+                    }
+                    else
+                    {
+                        // Match failed or timed out
+                        ShowCard = false;
+                        StatusMessage = "Huella no reconocida. Por favor, coloque el dedo nuevamente.";
+                        StatusMessageColor = (Color)ColorConverter.ConvertFromString("#FF7675"); // Danger
+                        await Task.Delay(2500, ct); // Show error for 2.5s
+                        
+                        StatusMessage = "Listo. Coloque su dedo para marcar.";
+                        StatusMessageColor = Colors.White;
+                    }
+                }
+                catch (OperationCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    ShowCard = false;
+                    StatusMessage = $"Error: {ex.Message}. Intente de nuevo.";
+                    StatusMessageColor = (Color)ColorConverter.ConvertFromString("#FF7675");
+                    await Task.Delay(3000, ct); // Wait before retrying
+                }
+                finally
+                {
+                    IsCapturing = false;
+                }
+            }
+        }
+
+        private async Task ResetSuccessStateAfterDelay(int delayMs)
+        {
+            await Task.Delay(delayMs);
+            if (!_disposed)
+            {
+                ShowCard = false;
+                IdentifiedEmployee = null;
+                StatusMessage = "Listo. Coloque su dedo para marcar.";
+                StatusMessageColor = Colors.White;
+            }
         }
 
         public async Task RefreshHistoryAsync()
@@ -112,7 +229,20 @@ namespace LectorHuellas.Features.Attendance
         [RelayCommand]
         private void RequestAdminAccess()
         {
+            // We don't stop the loop here, as Login is a dialog.
+            // But we might want to pause if needed.
             AdminAccessRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _clockTimer.Stop();
+                _scanningCts?.Cancel();
+                _scanningCts?.Dispose();
+                _disposed = true;
+            }
         }
     }
 }

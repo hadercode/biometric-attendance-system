@@ -8,6 +8,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- ═══ Header ═══ -->
@@ -20,6 +21,20 @@
             </StackPanel>
 
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                <Border Background="{StaticResource BgSurfaceBrush}" CornerRadius="20" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" 
+                        Padding="12,4" Margin="0,0,16,0" Width="220">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 Background="Transparent" BorderThickness="0" 
+                                 Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"
+                                 Tag="Buscar por Cédula..."/>
+                    </Grid>
+                </Border>
                 <Button Style="{StaticResource PrimaryButton}"
                         Command="{Binding DataContext.NewEmployeeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Margin="0,0,8,0">
@@ -35,42 +50,94 @@
 
         <!-- ═══ Employee Table ═══ -->
         <Border Grid.Row="1" Style="{StaticResource CardBorder}" Padding="0">
-            <DataGrid Style="{StaticResource ModernDataGrid}"
-                      ItemsSource="{Binding Employees}"
-                      SelectedItem="{Binding SelectedEmployee}"
-                      ColumnHeaderStyle="{StaticResource ModernColumnHeader}"
-                      RowStyle="{StaticResource ModernDataGridRow}"
-                      CellStyle="{StaticResource ModernDataGridCell}">
+            <Grid>
+                <DataGrid Style="{StaticResource ModernDataGrid}"
+                          ItemsSource="{Binding Employees}"
+                          SelectedItem="{Binding SelectedEmployee}"
+                          ColumnHeaderStyle="{StaticResource ModernColumnHeader}"
+                          RowStyle="{StaticResource ModernDataGridRow}"
+                          CellStyle="{StaticResource ModernDataGridCell}">
 
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60"/>
-                    <DataGridTextColumn Header="Nombre Completo" Binding="{Binding FullName}" Width="*"/>
-                    <DataGridTextColumn Header="Cédula" Binding="{Binding DocumentId}" Width="150"/>
-                    <DataGridTemplateColumn Header="Huella" Width="80">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding FingerprintTemplate, Converter={StaticResource HasValueConverter}}"
-                                           FontSize="16" HorizontalAlignment="Center"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Registro" Binding="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yyyy}'}" Width="120"/>
-                    <DataGridTemplateColumn Header="Acciones" Width="160">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="✏️ Editar" Style="{StaticResource SecondaryButton}"
-                                            Padding="8,4" FontSize="11" Margin="0,0,4,0"
-                                            Command="{Binding DataContext.EditEmployeeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                                    <Button Content="🗑️" Style="{StaticResource DangerButton}"
-                                            Padding="8,4" FontSize="11"
-                                            Command="{Binding DataContext.DeleteEmployeeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="60"/>
+                        <DataGridTextColumn Header="Cédula" Binding="{Binding Code}" Width="120"/>
+                        <DataGridTextColumn Header="Nombres" Binding="{Binding FirstNames}" Width="*"/>
+                        <DataGridTextColumn Header="Apellidos" Binding="{Binding LastNames}" Width="*"/>
+                        
+                        <DataGridTextColumn Header="Fecha Ingreso" Binding="{Binding HireDate, StringFormat='{}{0:dd/MM/yyyy}'}" Width="140"/>
+
+                        <DataGridTemplateColumn Header="Acciones" Width="160">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="✏️ Editar" Style="{StaticResource SecondaryButton}"
+                                                Padding="8,4" FontSize="11" Margin="0,0,4,0"
+                                                Command="{Binding DataContext.EditEmployeeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Content="🗑️" Style="{StaticResource DangerButton}"
+                                                Padding="8,4" FontSize="11"
+                                                Command="{Binding DataContext.DeleteEmployeeCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Loading Overlay -->
+                <Border Background="#80000000" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" CornerRadius="8">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="⌛" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                        <TextBlock Text="Cargando empleados..." Foreground="White" FontSize="14"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ═══ Pagination Footer ═══ -->
+        <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,8" 
+                Background="{StaticResource BgSurfaceBrush}"
+                CornerRadius="8" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Total:" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"/>
+                    <TextBlock Text="{Binding TotalRecords}" FontWeight="Bold" Margin="6,0,0,0"
+                               Foreground="{StaticResource TextPrimaryBrush}" FontSize="13"/>
+                    <TextBlock Text="empleados" Margin="6,0,0,0" Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Style="{StaticResource SecondaryButton}" 
+                            Command="{Binding PreviousPageCommand}"
+                            IsEnabled="{Binding CanGoPrevious}"
+                            Padding="12,6" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="◀" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Anterior" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Border Padding="12,0" VerticalAlignment="Center" Background="{StaticResource BgDarkBrush}" CornerRadius="4">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Página" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding CurrentPage}" FontWeight="Bold" Margin="6,0" Foreground="{StaticResource PrimaryLightBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="de" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding TotalPages}" FontWeight="Bold" Margin="6,0,0,0" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Button Style="{StaticResource SecondaryButton}" 
+                            Command="{Binding NextPageCommand}"
+                            IsEnabled="{Binding CanGoNext}"
+                            Padding="12,6" Margin="8,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Siguiente" VerticalAlignment="Center"/>
+                            <TextBlock Text="▶" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
         </Border>
     </Grid>
 </UserControl>

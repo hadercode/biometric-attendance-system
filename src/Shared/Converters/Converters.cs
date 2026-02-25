@@ -176,6 +176,11 @@ namespace LectorHuellas.Shared.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            if (value is System.Collections.IEnumerable enumerable)
+            {
+                var enumerator = enumerable.GetEnumerator();
+                return enumerator.MoveNext() ? "✅" : "❌";
+            }
             return value != null ? "✅" : "❌";
         }
 
@@ -223,6 +228,26 @@ namespace LectorHuellas.Shared.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Converts a Color to a SolidColorBrush
+    /// </summary>
+    public class ColorToBrushConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Color color)
+                return new SolidColorBrush(color);
+            return Brushes.White;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is SolidColorBrush brush)
+                return brush.Color;
+            return Colors.White;
         }
     }
 }

@@ -15,14 +15,12 @@
 
         <!-- ═══ Navigation to Admin (Discreet) ═══ -->
         <Button Command="{Binding RequestAdminAccessCommand}"
-                VerticalAlignment="Top" HorizontalAlignment="Left"
-                Margin="20" Padding="12,8" Panel.ZIndex="10"
-                Style="{StaticResource SecondaryButton}"
-                Background="Transparent" BorderThickness="0"
-                Opacity="0.2">
+                VerticalAlignment="Top" HorizontalAlignment="Right"
+                Margin="32" Padding="20,10" Panel.ZIndex="10"
+                Style="{StaticResource SecondaryButton}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="⚙️" Margin="0,0,8,0"/>
-                <TextBlock Text="Admin" FontSize="11"/>
+                <TextBlock Text="⚙️" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <TextBlock Text="Panel Administrativo" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </StackPanel>
         </Button>
 
@@ -34,25 +32,24 @@
             <!-- 2. Main Content (Clock & Status) -->
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <StackPanel Visibility="{Binding ShowCard, Converter={StaticResource InverseBoolToVis}}">
-                    <TextBlock Text="{Binding Source={x:Static System:DateTime.Now}, StringFormat='HH:mm'}" 
-                               xmlns:System="clr-namespace:System;assembly=System.Runtime"
+                    <TextBlock Text="{Binding CurrentTime}" 
                                FontSize="160" FontWeight="Bold" 
                                Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"
                                FontFamily="Segoe UI Light" Opacity="0.9"/>
+
+                    <TextBlock Text="{Binding CurrentDate}" 
+                               FontSize="24" FontWeight="SemiBold" 
+                               Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                               Margin="0,-30,0,40" Opacity="0.7"/>
                     
-                    <Border CornerRadius="30" Padding="40,24" Background="#15FFFFFF" HorizontalAlignment="Center" Margin="0,20,0,0">
+                    <Border CornerRadius="30" Padding="40,24" Background="#15FFFFFF" HorizontalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="👆" FontSize="32" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                            <TextBlock Text="Presione el botón para marcar" FontSize="24" FontWeight="Medium"
-                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="24" FontWeight="Medium"
+                                       Foreground="{Binding StatusMessageColor, Converter={StaticResource ColorToBrushConverter}}" 
+                                       VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
-                    
-                    <Button Style="{StaticResource PrimaryButton}" 
-                            Command="{Binding CaptureAndIdentifyAsyncCommand}"
-                            Width="300" Height="60" Margin="0,40,0,0">
-                        <TextBlock Text="MARCAR ASISTENCIA" FontSize="18" FontWeight="Bold"/>
-                    </Button>
                 </StackPanel>
 
                 <!-- 3. Identification Result Overlay -->

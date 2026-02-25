@@ -60,7 +60,7 @@ namespace LectorHuellas.Core.Models
             return Provider switch
             {
                 "PostgreSQL" => $"Host={Host};Port={Port};Database={Database};Username={Username};Password={Password}",
-                "MySQL" => $"Server={Host};Port={Port};Database={Database};User={Username};Password={Password};",
+                "MySQL" => $"Server={Host};Port={Port};Database={Database};User={Username};Password={Password};ConvertZeroDateTime=True;",
                 _ => $"Data Source={GetSqlitePath()}" // SQLite
             };
         }
