@@ -13,6 +13,7 @@ namespace LectorHuellas.Core.Models
         public string Username { get; set; } = "postgres";
         public string Password { get; set; } = "";
         public string SqlitePath { get; set; } = "";
+        public string Theme { get; set; } = "Dark"; // Dark | Light
 
         private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

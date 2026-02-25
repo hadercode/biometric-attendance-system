@@ -8,9 +8,9 @@
             <Setter Property="Height" Value="72"/>
             <Setter Property="Margin" Value="3"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Background" Value="#2D333B"/>
-            <Setter Property="Foreground" Value="#8B949E"/>
-            <Setter Property="BorderBrush" Value="#444C56"/>
+            <Setter Property="Background" Value="{DynamicResource BgSurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="Template">
@@ -24,8 +24,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#58A6FF"/>
-                                <Setter TargetName="bd" Property="Background" Value="#1C2128"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource PrimaryLightBrush}"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource BgHoverBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -34,10 +34,10 @@
         </Style>
     </UserControl.Resources>
 
-    <Border Background="#161B22" CornerRadius="12" Padding="20,16" BorderThickness="1" BorderBrush="#30363D">
+    <Border Background="{DynamicResource BgDarkBrush}" CornerRadius="12" Padding="20,16" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
         <StackPanel>
             <TextBlock Text="Seleccione un dedo para registrar" FontSize="14" FontWeight="SemiBold"
-                       Foreground="#E6EDF3" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                       Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 
             <Grid HorizontalAlignment="Center">
                 <Grid.ColumnDefinitions>
@@ -48,7 +48,7 @@
 
                 <!-- Left Hand -->
                 <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                    <TextBlock Text="🤚 Mano Izquierda" FontSize="11" Foreground="#8B949E"
+                    <TextBlock Text="🤚 Mano Izquierda" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="BtnLeftPinky" Style="{StaticResource FingerButton}"
@@ -75,11 +75,11 @@
                 </StackPanel>
 
                 <!-- Separator -->
-                <Border Grid.Column="1" Width="1" Background="#30363D" Margin="0,20,0,0"/>
+                <Border Grid.Column="1" Width="1" Background="{DynamicResource BorderBrush}" Margin="0,20,0,0"/>
 
                 <!-- Right Hand -->
                 <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                    <TextBlock Text="Mano Derecha 🤚" FontSize="11" Foreground="#8B949E"
+                    <TextBlock Text="Mano Derecha 🤚" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <Button x:Name="BtnRightThumb" Style="{StaticResource FingerButton}"
@@ -107,11 +107,11 @@
             </Grid>
 
             <!-- Selected finger indicator -->
-            <TextBlock x:Name="SelectedFingerText" FontSize="13" Foreground="#58A6FF"
+            <TextBlock x:Name="SelectedFingerText" FontSize="13" Foreground="{StaticResource PrimaryLightBrush}"
                        HorizontalAlignment="Center" Margin="0,12,0,0" FontWeight="SemiBold"/>
 
             <!-- Enrolled count -->
-            <TextBlock x:Name="EnrolledCountText" FontSize="12" Foreground="#8B949E"
+            <TextBlock x:Name="EnrolledCountText" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                        HorizontalAlignment="Center" Margin="0,4,0,0"/>
         </StackPanel>
     </Border>

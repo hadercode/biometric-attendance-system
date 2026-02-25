@@ -24,7 +24,10 @@ namespace LectorHuellas.Features.Main
         private readonly IFingerprintService _fingerprintService;
         private readonly IEmployeeService _employeeService;
         private readonly ICommonService _commonService;
+        private readonly IThemeService _themeService;
         private readonly AttendanceService _attendanceService;
+        private readonly IAuthService _authService;
+        private readonly SessionService _sessionService;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsPublicMode))]
@@ -35,6 +38,9 @@ namespace LectorHuellas.Features.Main
         public bool IsPublicMode => CurrentMode == AppMode.Public;
         public bool IsAuthMode => CurrentMode == AppMode.Auth;
         public bool IsAdminMode => CurrentMode == AppMode.Admin;
+
+        public bool CanConfigureSettings => _sessionService.CanConfigureSettings;
+        public string UserDisplayName => _sessionService.CurrentUser?.FullName ?? "Usuario";
 
         [ObservableProperty]
         private string _currentPage = "Attendance";
@@ -57,18 +63,24 @@ namespace LectorHuellas.Features.Main
         public AttendanceReportViewModel AttendanceReportVM { get; }
         public SettingsViewModel SettingsVM { get; }
 
-        public MainViewModel(IFingerprintService fingerprintService, IEmployeeService employeeService, ICommonService commonService, AttendanceService attendanceService)
+        public bool IsDarkTheme => _themeService.IsDarkTheme;
+
+        public MainViewModel(IFingerprintService fingerprintService, IEmployeeService employeeService, ICommonService commonService, 
+            IThemeService themeService, AttendanceService attendanceService, IAuthService authService, SessionService sessionService)
         {
             _fingerprintService = fingerprintService;
             _employeeService = employeeService;
             _commonService = commonService;
+            _themeService = themeService;
             _attendanceService = attendanceService;
+            _authService = authService;
+            _sessionService = sessionService;
 
             // Initialize all child ViewModels
             AttendanceVM = new AttendanceViewModel(fingerprintService, attendanceService);
-            LoginVM = new LoginViewModel();
+            LoginVM = new LoginViewModel(authService, sessionService);
             DashboardVM = new DashboardViewModel(fingerprintService, employeeService, attendanceService);
-            EmployeeListVM = new EmployeeListViewModel(employeeService);
+            EmployeeListVM = new EmployeeListViewModel(employeeService, commonService);
             EmployeeFormVM = new EmployeeFormViewModel(fingerprintService, employeeService, commonService, attendanceService);
             AttendanceReportVM = new AttendanceReportViewModel(employeeService, attendanceService);
             SettingsVM = new SettingsViewModel();
@@ -94,6 +106,8 @@ namespace LectorHuellas.Features.Main
                 CurrentMode = AppMode.Admin;
                 NavigateToPage("Dashboard");
                 LoginVM.Clear();
+                OnPropertyChanged(nameof(CanConfigureSettings));
+                OnPropertyChanged(nameof(UserDisplayName));
             };
 
             LoginVM.BackRequested += (s, e) =>
@@ -120,6 +134,12 @@ namespace LectorHuellas.Features.Main
         [RelayCommand]
         private void NavigateToPage(string page)
         {
+            if (page == "Settings" && !CanConfigureSettings)
+            {
+                // Prevent navigation if not allowed
+                return;
+            }
+
             CurrentPage = page;
 
             if (page == "Employees")
@@ -150,9 +170,17 @@ namespace LectorHuellas.Features.Main
         [RelayCommand]
         private void Logout()
         {
+            _sessionService.ClearSession();
             CurrentMode = AppMode.Public;
             CurrentPage = "Attendance";
             _ = AttendanceVM.RefreshHistoryAsync();
+        }
+
+        [RelayCommand]
+        private void ToggleTheme()
+        {
+            _themeService.ToggleTheme();
+            OnPropertyChanged(nameof(IsDarkTheme));
         }
 
         public void Dispose()

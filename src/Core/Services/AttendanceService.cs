@@ -23,7 +23,7 @@ namespace LectorHuellas.Core.Services
         /// Highly optimized flow for ID Card screen: Uses SDK native 1:N identification
         /// Handles capture UI (callbacks) and matching in a single SDK call.
         /// </summary>
-        public async Task<(Employee Employee, AttendanceType Type)?> IdentifyAndRecordAsync()
+        public async Task<(Employee Employee, AttendanceType Type, bool NoMatch)?> IdentifyAndRecordAsync()
         {
             // 1. Get all templates and map them to Employee IDs
             var templatesWithEmp = await _employeeService.GetAllTemplatesForIdentificationAsync();
@@ -36,7 +36,12 @@ namespace LectorHuellas.Core.Services
             var (matchIndex, _) = await _fingerprintService.IdentifyFingerprintAsync(templates);
 
             if (matchIndex < 0 || matchIndex >= empIds.Count)
-                return null;
+            {
+                if (matchIndex == -1) // Specific "No Match Found"
+                    return (null, default, true);
+                    
+                return null; // Cancelled (-2) or error
+            }
 
             int matchedEmployeeId = empIds[matchIndex];
 
@@ -47,7 +52,7 @@ namespace LectorHuellas.Core.Services
             var employee = await _employeeService.GetEmployeeByIdAsync(matchedEmployeeId);
             if (employee == null) return null;
 
-            return (employee, type);
+            return (employee, type, false);
         }
 
         // ── Attendance ──────────────────────────────────────────────────

@@ -90,6 +90,7 @@ namespace LectorHuellas.Features.Attendance
         {
             _scanningCts?.Cancel();
             _scanningCts = null;
+            _fingerprintService.CancelCurrentOperation();
         }
 
         private async Task RunScanningLoopAsync(CancellationToken ct)
@@ -112,7 +113,7 @@ namespace LectorHuellas.Features.Attendance
                     // Note: IdentifyAndRecordAsync waits inside the SDK for a finger to be placed
                     var result = await _attendanceService.IdentifyAndRecordAsync();
 
-                    if (result.HasValue)
+                    if (result.HasValue && !result.Value.NoMatch)
                     {
                         ShowCard = false; // Briefly hide to trigger animation/refresh if needed
                         IdentifiedEmployee = result.Value.Employee;
@@ -126,9 +127,9 @@ namespace LectorHuellas.Features.Attendance
                         // Auto-hide card after 4 seconds, but don't block the loop
                         _ = ResetSuccessStateAfterDelay(4000);
                     }
-                    else
+                    else if (result.HasValue && result.Value.NoMatch)
                     {
-                        // Match failed or timed out
+                        // Match failed but NOT cancelled
                         ShowCard = false;
                         StatusMessage = "Huella no reconocida. Por favor, coloque el dedo nuevamente.";
                         StatusMessageColor = (Color)ColorConverter.ConvertFromString("#FF7675"); // Danger
@@ -136,6 +137,15 @@ namespace LectorHuellas.Features.Attendance
                         
                         StatusMessage = "Listo. Coloque su dedo para marcar.";
                         StatusMessageColor = Colors.White;
+                    }
+                    else
+                    {
+                        // result is null: probably cancelled or error
+                        // Don't show error if we are stopping
+                        if (ct.IsCancellationRequested) break;
+                        
+                        // Small delay if it was a transient error
+                        if (!ct.IsCancellationRequested) await Task.Delay(500, ct);
                     }
                 }
                 catch (OperationCanceledException) { break; }
@@ -159,6 +169,9 @@ namespace LectorHuellas.Features.Attendance
             if (!_disposed)
             {
                 ShowCard = false;
+                
+                // Wait for animation to finish before clearing data
+                await Task.Delay(500);
                 IdentifiedEmployee = null;
                 StatusMessage = "Listo. Coloque su dedo para marcar.";
                 StatusMessageColor = Colors.White;
@@ -191,7 +204,7 @@ namespace LectorHuellas.Features.Attendance
                 // Unified identification and recording
                 var result = await _attendanceService.IdentifyAndRecordAsync();
                 
-                if (result.HasValue)
+                if (result.HasValue && !result.Value.NoMatch)
                 {
                     IdentifiedEmployee = result.Value.Employee;
                     AttendanceTypeBadge = result.Value.Type == AttendanceType.CheckIn ? "ENTRADA REGISTRADA" : "SALIDA REGISTRADA";
@@ -202,17 +215,28 @@ namespace LectorHuellas.Features.Attendance
                     await RefreshHistoryAsync();
 
                     // Auto-hide card after 5 seconds
-                    _ = Task.Delay(5000).ContinueWith(_ => { 
-                        ShowCard = false; 
-                        IdentifiedEmployee = null; 
-                        StatusMessage = "Coloque su dedo en el lector para marcar asistencia";
-                        StatusMessageColor = Colors.White;
-                    }, TaskScheduler.FromCurrentSynchronizationContext());
+                    _ = Task.Run(async () => {
+                        await Task.Delay(5000);
+                        ShowCard = false;
+                        await Task.Delay(500); // Animation delay
+                        
+                        await App.Current.Dispatcher.InvokeAsync(() => {
+                            IdentifiedEmployee = null;
+                            StatusMessage = "Coloque su dedo en el lector para marcar asistencia";
+                            StatusMessageColor = Colors.White;
+                        });
+                    });
                 }
-                else
+                else if (result.HasValue && result.Value.NoMatch)
                 {
                     StatusMessage = "Huella no reconocida. Intente de nuevo.";
                     StatusMessageColor = (Color)ColorConverter.ConvertFromString("#FF7675"); // Danger
+                }
+                else
+                {
+                    // Cancelled or transient error
+                    StatusMessage = "Captura cancelada.";
+                    StatusMessageColor = Colors.White;
                 }
             }
             catch (Exception ex)

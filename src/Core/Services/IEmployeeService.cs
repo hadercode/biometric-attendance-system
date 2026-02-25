@@ -12,8 +12,8 @@ namespace LectorHuellas.Core.Services
         Task<bool> DeleteEmployeeAsync(int id);
         Task<bool> DeactivateEmployeeAsync(int id);
         Task<List<Employee>> GetAllEmployeesAsync();
-        Task<List<Employee>> GetEmployeesPaginatedAsync(int page, int pageSize, string? searchTerm = null);
-        Task<int> GetTotalEmployeesCountAsync(string? searchTerm = null);
+        Task<List<Employee>> GetEmployeesPaginatedAsync(int page, int pageSize, string? searchTerm = null, string? sortColumn = null, bool sortDescending = false, string? departmentId = null, string? nameFilter = null);
+        Task<int> GetTotalEmployeesCountAsync(string? searchTerm = null, string? departmentId = null, string? nameFilter = null);
         Task<Employee?> GetEmployeeByIdAsync(int id);
         Task<List<(int employeeId, byte[] templateData)>> GetAllTemplatesForIdentificationAsync();
         Task<List<Employee>> GetEmployeesWithTemplatesAsync();

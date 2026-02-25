@@ -5,6 +5,18 @@
         Title="Lector de Huellas — Control de Asistencia" 
         WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BgDarkBrush}">
-    <attendance:AttendanceView DataContext="{Binding AttendanceVM}"/>
+        Background="{DynamicResource BgDarkBrush}">
+    <Grid>
+        <attendance:AttendanceView DataContext="{Binding AttendanceVM}"/>
+        
+        <!-- Floating Theme Toggle -->
+        <Button Style="{StaticResource ThemeToggleButton}" 
+                Command="{Binding ToggleThemeCommand}"
+                HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Margin="20" Width="40" Height="40" Padding="0"
+                ToolTip="Cambiar Tema (Claro/Oscuro)">
+            <TextBlock Text="{Binding IsDarkTheme, Converter={StaticResource BoolToTextConverter}, ConverterParameter=🌙|☀️}" 
+                       FontSize="20"/>
+        </Button>
+    </Grid>
 </Window>

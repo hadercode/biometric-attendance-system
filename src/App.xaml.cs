@@ -20,7 +20,10 @@ namespace LectorHuellas
         private IFingerprintService _fingerprintService = null!;
         private IEmployeeService _employeeService = null!;
         private ICommonService _commonService = null!;
+        private IThemeService _themeService = null!;
         private AttendanceService _attendanceService = null!;
+        private IAuthService _authService = null!;
+        private SessionService _sessionService = null!;
         private MainViewModel? _mainVM;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -74,9 +77,14 @@ namespace LectorHuellas
             _fingerprintService = CreateFingerprintService();
             _employeeService = new EmployeeService();
             _commonService = new CommonService();
+            _themeService = new ThemeService();
+            _themeService.Initialize();
+            
+            _authService = new AuthService();
+            _sessionService = new SessionService();
             
             _attendanceService = new AttendanceService(_fingerprintService, _employeeService);
-            _mainVM = new MainViewModel(_fingerprintService, _employeeService, _commonService, _attendanceService);
+            _mainVM = new MainViewModel(_fingerprintService, _employeeService, _commonService, _themeService, _attendanceService, _authService, _sessionService);
             
             // ... rest of the setup ...
             // Handle admin navigation
@@ -220,7 +228,6 @@ namespace LectorHuellas
                         codigo VARCHAR(3) PRIMARY KEY,
                         gerencia VARCHAR(100) NOT NULL
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-
                 string createShiftsSql = @"
                     CREATE TABLE IF NOT EXISTS turno (
                         codigo VARCHAR(3) PRIMARY KEY,
@@ -236,12 +243,28 @@ namespace LectorHuellas
                         entrada VARCHAR(50)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
+                string createUsuariosSql = @"
+                    CREATE TABLE IF NOT EXISTS usuarios (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        usuario VARCHAR(50) NOT NULL UNIQUE,
+                        password VARCHAR(100) NOT NULL,
+                        nombre VARCHAR(100),
+                        rol_id INT NOT NULL,
+                        status VARCHAR(20) DEFAULT 'Habilitado'
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+                
+                string insertAdminSql = @"
+                    INSERT IGNORE INTO usuarios (usuario, password, nombre, rol_id, status)
+                    VALUES ('admin', 'admin123', 'Administrador', 1, 'Habilitado');";
+
                 db.Database.ExecuteSqlRaw(createAttendanceSql);
                 db.Database.ExecuteSqlRaw(createFingerprintsSql);
                 db.Database.ExecuteSqlRaw(createDepartmentsSql);
                 db.Database.ExecuteSqlRaw(createUnitsSql);
                 db.Database.ExecuteSqlRaw(createManagementsSql);
                 db.Database.ExecuteSqlRaw(createShiftsSql);
+                db.Database.ExecuteSqlRaw(createUsuariosSql);
+                db.Database.ExecuteSqlRaw(insertAdminSql);
 
                 // Aggressive type conversion: If tables already existed with VARCHAR employee_id, convert them to INT
                 // This is needed because 'CREATE TABLE IF NOT EXISTS' doesn't update existing table structures.

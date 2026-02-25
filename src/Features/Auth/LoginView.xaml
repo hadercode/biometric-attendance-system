@@ -6,7 +6,7 @@
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="1024">
 
-    <Grid Background="{StaticResource BgDarkBrush}">
+    <Grid Background="{DynamicResource BgDarkBrush}">
         <!-- ═══ Background Decorative Elements ═══ -->
         <Path Data="M 0,0 L 400,0 L 0,400 Z" Fill="#0A6C5CE7" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         <Path Data="M 1000,1000 L 600,1000 L 1000,600 Z" Fill="#0A00CEC9" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
@@ -17,23 +17,21 @@
                 <!-- Icon & Header -->
                 <TextBlock Text="🔒" FontSize="48" HorizontalAlignment="Center" Margin="0,0,0,16"/>
                 <TextBlock Text="Acceso Administrativo" FontSize="22" FontWeight="Bold" 
-                           Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                           Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
                 <TextBlock Text="Ingrese sus credenciales para continuar" FontSize="13" 
-                           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,32"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,32"/>
 
                 <!-- Username -->
                 <TextBlock Text="Usuario" FontSize="12" FontWeight="SemiBold" 
-                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                 <TextBox Style="{StaticResource ModernTextBox}" 
                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,20"/>
 
                 <!-- Password -->
                 <TextBlock Text="Contraseña" FontSize="12" FontWeight="SemiBold" 
-                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
-                <PasswordBox x:Name="LoginPasswordBox" FontSize="14" Padding="12,10"
-                             Background="#21262D" Foreground="#F0F6FC"
-                             BorderBrush="#30363D" BorderThickness="1"
+                           Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                <PasswordBox x:Name="LoginPasswordBox" Style="{StaticResource ModernPasswordBox}"
                              PasswordChanged="PasswordBox_PasswordChanged"
                              Margin="0,0,0,12"/>
 
@@ -49,7 +47,7 @@
                 <!-- Back Button -->
                 <Button x:Name="btnAttendance" Style="{StaticResource SecondaryButton}" Content="Regresar a Asistencia"
                         Command="{Binding BackCommand}" Padding="0,10" BorderThickness="0" Background="Transparent"
-                        Foreground="{StaticResource TextSecondaryBrush}"/>
+                        Foreground="{DynamicResource TextSecondaryBrush}"/>
             </StackPanel>
         </Border>
     </Grid>

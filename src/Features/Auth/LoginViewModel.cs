@@ -1,6 +1,8 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LectorHuellas.Core.Services;
+using System.Threading.Tasks;
 
 namespace LectorHuellas.Features.Auth
 {
@@ -21,8 +23,17 @@ namespace LectorHuellas.Features.Auth
         public event EventHandler? LoginSuccess;
         public event EventHandler? BackRequested;
 
+        private readonly IAuthService _authService;
+        private readonly SessionService _sessionService;
+
+        public LoginViewModel(IAuthService authService, SessionService sessionService)
+        {
+            _authService = authService;
+            _sessionService = sessionService;
+        }
+
         [RelayCommand]
-        private void Login()
+        private async Task Login()
         {
             if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
             {
@@ -30,15 +41,29 @@ namespace LectorHuellas.Features.Auth
                 return;
             }
 
-            // Simple hardcoded login for now (as requested for future security layer)
-            if (Username.ToLower() == "admin" && Password == "admin123")
+            IsBusy = true;
+            ErrorMessage = string.Empty;
+
+            try
             {
-                ErrorMessage = string.Empty;
-                LoginSuccess?.Invoke(this, EventArgs.Empty);
+                var user = await _authService.LoginAsync(Username, Password);
+                if (user != null)
+                {
+                    _sessionService.StartSession(user);
+                    LoginSuccess?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    ErrorMessage = "Usuario o contraseña incorrectos.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                ErrorMessage = "Credenciales incorrectas.";
+                ErrorMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

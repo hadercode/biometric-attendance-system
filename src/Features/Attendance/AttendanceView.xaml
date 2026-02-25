@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1024">
 
-    <Grid Background="{StaticResource BgDarkBrush}">
+    <Grid Background="{DynamicResource BgDarkBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>      <!-- Left: Main Stage -->
             <ColumnDefinition Width="380"/>    <!-- Right: Recent Activity -->
@@ -34,12 +34,12 @@
                 <StackPanel Visibility="{Binding ShowCard, Converter={StaticResource InverseBoolToVis}}">
                     <TextBlock Text="{Binding CurrentTime}" 
                                FontSize="160" FontWeight="Bold" 
-                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"
                                FontFamily="Segoe UI Light" Opacity="0.9"/>
 
                     <TextBlock Text="{Binding CurrentDate}" 
                                FontSize="24" FontWeight="SemiBold" 
-                               Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"
                                Margin="0,-30,0,40" Opacity="0.7"/>
                     
                     <Border CornerRadius="30" Padding="40,24" Background="#15FFFFFF" HorizontalAlignment="Center">
@@ -79,7 +79,7 @@
                                     <!-- Photo -->
                                     <Border Grid.Column="0" Width="120" Height="120" CornerRadius="60" 
                                             BorderThickness="4" BorderBrush="{StaticResource SuccessBrush}"
-                                            Background="{StaticResource BgSurfaceBrush}" ClipToBounds="True">
+                                            Background="{DynamicResource BgSurfaceBrush}" ClipToBounds="True">
                                         <Grid>
                                             <TextBlock Text="👤" FontSize="70" HorizontalAlignment="Center" VerticalAlignment="Center" 
                                                        Opacity="0.3" Visibility="{Binding IdentifiedEmployee.PhotoPath, Converter={StaticResource NullToVisConverter}}"/>
@@ -93,14 +93,14 @@
                                         <TextBlock Text="{Binding AttendanceTypeBadge}" FontSize="12" FontWeight="Bold" 
                                                    Foreground="{StaticResource SuccessBrush}"/>
                                         <TextBlock Text="{Binding IdentifiedEmployee.FullName}" FontSize="24" FontWeight="Bold" 
-                                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                                         <TextBlock Text="{Binding IdentifiedEmployee.Position}" FontSize="16" 
-                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
                                     </StackPanel>
                                 </Grid>
                                 
                                 <TextBlock Text="¡GRACIAS POR SU ASISTENCIA!" FontSize="14" FontWeight="Bold"
-                                           Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,32,0,0"/>
+                                           Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,32,0,0"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -109,8 +109,8 @@
         </Grid>
 
         <!-- ═══ RIGHT PANEL: Recent Activity Feed ═══ -->
-        <Border Grid.Column="1" Background="{StaticResource BgCardBrush}" 
-                BorderThickness="1,0,0,0" BorderBrush="{StaticResource BorderBrush}">
+        <Border Grid.Column="1" Background="{DynamicResource BgCardBrush}" 
+                BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -119,8 +119,8 @@
 
                 <Border Padding="24,32,24,20">
                     <StackPanel>
-                        <TextBlock Text="HISTORIAL DE HOY" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Últimos 10 registros" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="HISTORIAL DE HOY" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Últimos 10 registros" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
 
@@ -128,7 +128,7 @@
                     <ItemsControl ItemsSource="{Binding RecentRecords}" Margin="24,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,0,0,12" Padding="16" Background="{StaticResource BgSurfaceBrush}" CornerRadius="12">
+                                <Border Margin="0,0,0,12" Padding="16" Background="{DynamicResource BgSurfaceBrush}" CornerRadius="12">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -136,8 +136,8 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding Employee.FullName}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding Timestamp, StringFormat='hh:mm:ss tt'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding Employee.FullName}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Timestamp, StringFormat='hh:mm:ss tt'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                                         </StackPanel>
 
                                         <Border Grid.Column="1" Padding="8,4" CornerRadius="4" VerticalAlignment="Center">

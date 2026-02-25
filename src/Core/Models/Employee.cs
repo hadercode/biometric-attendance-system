@@ -81,6 +81,12 @@ namespace LectorHuellas.Core.Models
         [NotMapped]
         public bool IsActive => Status == 1;
 
+        [ForeignKey("ManagementId")]
+        public virtual Management? Management { get; set; }
+
+        [ForeignKey("DepartmentId")]
+        public virtual Department? Department { get; set; }
+
         public ICollection<AttendanceRecord> AttendanceRecords { get; set; } = new List<AttendanceRecord>();
         public ICollection<FingerprintTemplate> Fingerprints { get; set; } = new List<FingerprintTemplate>();
     }

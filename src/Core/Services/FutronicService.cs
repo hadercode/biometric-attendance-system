@@ -19,6 +19,7 @@ namespace LectorHuellas.Core.Services
         private int _imageHeight;
         private int _imageSize;
         private int _maxTemplateSize;
+        private bool _isOperationCancelled;
 
         // Keep callback alive to prevent GC
         private FtrScanApi.FTR_CB_STATE_CONTROL? _callbackDelegate;
@@ -104,7 +105,7 @@ namespace LectorHuellas.Core.Services
         /// </summary>
         private void StateControlCallback(IntPtr Context, uint StateMask, ref uint pResponse, uint Signal, IntPtr pBitmap)
         {
-            pResponse = FtrScanApi.FTR_CONTINUE;
+            pResponse = _isOperationCancelled ? FtrScanApi.FTR_CANCEL : FtrScanApi.FTR_CONTINUE;
 
             if ((StateMask & FtrScanApi.FTR_STATE_SIGNAL_PROVIDED) != 0)
             {
@@ -209,6 +210,7 @@ namespace LectorHuellas.Core.Services
                         };
 
                         Console.WriteLine("FTRAPI: 📝 Enrollment - Coloque el dedo en el lector...");
+                        _isOperationCancelled = false;
                         int result = FtrScanApi.FTREnrollX(IntPtr.Zero, FtrScanApi.FTR_PURPOSE_ENROLL, ref templateData, ref enrollData);
 
                         if (result == FtrScanApi.FTR_RETCODE_OK)
@@ -274,12 +276,14 @@ namespace LectorHuellas.Core.Services
                         {
                             dwSize = (uint)Marshal.SizeOf<FtrScanApi.FTR_ENROLL_DATA>()
                         };
+                        _isOperationCancelled = false;
                         int result = FtrScanApi.FTREnrollX(IntPtr.Zero, FtrScanApi.FTR_PURPOSE_IDENTIFY, ref baseData, ref enrollData);
 
                         if (result != FtrScanApi.FTR_RETCODE_OK)
                         {
                             Console.WriteLine($"FTRAPI: ❌ FTREnrollX(IDENTIFY) falló. Error: {result} ({FtrScanApi.RetCodeToMessage(result)})");
-                            return (-1, _lastCapturedImage);
+                            int matchIndex = (result == FtrScanApi.FTR_RETCODE_CANCELED_BY_USER || _isOperationCancelled) ? -2 : -1;
+                            return (matchIndex, _lastCapturedImage);
                         }
 
                         Console.WriteLine("FTRAPI: Base template creado. Comparando...");
@@ -415,6 +419,12 @@ namespace LectorHuellas.Core.Services
         }
 
         public (int width, int height) GetImageSize() => (_imageWidth, _imageHeight);
+
+        public void CancelCurrentOperation()
+        {
+            _isOperationCancelled = true;
+            Console.WriteLine("FTRAPI: Solicitud de cancelación enviada.");
+        }
 
         public void Dispose()
         {

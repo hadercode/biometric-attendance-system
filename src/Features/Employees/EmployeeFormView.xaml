@@ -14,17 +14,17 @@
 
             <!-- Header -->
             <TextBlock Text="{Binding FormTitle}" FontSize="24" FontWeight="Bold"
-                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,20"/>
+                       Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
 
             <!-- ═══ Form Card ═══ -->
             <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="Información del Empleado" FontSize="16" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                               Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,16"/>
 
                     <!-- Code (Cedula) -->
                     <TextBlock Text="Código / Cédula" FontSize="12" FontWeight="Medium"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource ModernTextBox}"
                              Text="{Binding Code, UpdateSourceTrigger=PropertyChanged}"
                              IsEnabled="{Binding IsEditing, Converter={StaticResource InverseBoolConverter}}"
@@ -40,14 +40,14 @@
                         
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Nombres" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Style="{StaticResource ModernTextBox}"
                                      Text="{Binding FirstNames, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Apellidos" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Style="{StaticResource ModernTextBox}"
                                      Text="{Binding LastNames, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
@@ -55,7 +55,7 @@
 
                     <!-- Position -->
                     <TextBlock Text="Código Cargo (ccargo)" FontSize="12" FontWeight="Medium"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource ModernTextBox}"
                              Text="{Binding Position, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,0,0,16"/>
@@ -69,13 +69,13 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Dirección" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Style="{StaticResource ModernTextBox}"
                                      Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Teléfono" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Style="{StaticResource ModernTextBox}"
                                      Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
@@ -90,19 +90,19 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="Fecha Nacimiento" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                            <DatePicker SelectedDate="{Binding BirthDate}"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <DatePicker Style="{StaticResource ModernDatePicker}" SelectedDate="{Binding BirthDate}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="Fecha Ingreso" FontSize="12" FontWeight="Medium"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                            <DatePicker SelectedDate="{Binding HireDate}"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <DatePicker Style="{StaticResource ModernDatePicker}" SelectedDate="{Binding HireDate}"/>
                         </StackPanel>
                     </Grid>
 
                     <!-- Message -->
                     <TextBlock Text="Mensaje Personalizado (Pantalla Asistencia)" FontSize="12" FontWeight="Medium"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource ModernTextBox}"
                              Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,0,0,16"/>
@@ -124,7 +124,7 @@
 
                         <!-- Gerencia -->
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Gerencia" FontSize="12" FontWeight="Medium"
-                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                         <ComboBox Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Managements}"
                                   SelectedValue="{Binding ManagementId, Mode=TwoWay}"
                                   SelectedValuePath="Code"
@@ -133,7 +133,7 @@
 
                         <!-- Departamento -->
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="Departamento" FontSize="12" FontWeight="Medium"
-                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                         <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Departments}"
                                   SelectedValue="{Binding DepartmentId, Mode=TwoWay}"
                                   SelectedValuePath="Code"
@@ -142,7 +142,7 @@
 
                         <!-- Unidad -->
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Unidad" FontSize="12" FontWeight="Medium"
-                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                         <ComboBox Grid.Row="4" Grid.Column="0" ItemsSource="{Binding Units}"
                                   SelectedValue="{Binding UnitId, Mode=TwoWay}"
                                   SelectedValuePath="Code"
@@ -151,7 +151,7 @@
 
                         <!-- Turno -->
                         <TextBlock Grid.Row="3" Grid.Column="2" Text="Turno" FontSize="12" FontWeight="Medium"
-                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                         <ComboBox Grid.Row="4" Grid.Column="2" ItemsSource="{Binding Shifts}"
                                   SelectedValue="{Binding ShiftId, Mode=TwoWay}"
                                   SelectedValuePath="Code"
@@ -161,13 +161,13 @@
 
                     <!-- Photo Selection -->
                     <TextBlock Text="Foto del Empleado" FontSize="12" FontWeight="Medium"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Border Width="60" Height="60" CornerRadius="30" Background="{StaticResource BgSurfaceBrush}" ClipToBounds="True">
+                        <Border Width="60" Height="60" CornerRadius="30" Background="{DynamicResource BgSurfaceBrush}" ClipToBounds="True">
                             <Grid>
                                 <TextBlock Text="👤" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.3"/>
                                 <Image Source="{Binding PhotoPath}" Stretch="UniformToFill"/>
@@ -195,7 +195,7 @@
 
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                         <TextBlock Text="Captura de Huella" FontSize="16" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                   Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
 
                         <!-- Real-time status -->
                         <TextBlock FontSize="13" Margin="0,0,0,16" TextWrapping="Wrap">
@@ -228,8 +228,8 @@
 
                     <!-- Fingerprint Preview -->
                     <Border Grid.Column="1" Width="160" Height="200" CornerRadius="12"
-                            Background="{StaticResource BgSurfaceBrush}"
-                            BorderThickness="2" BorderBrush="{StaticResource BorderBrush}"
+                            Background="{DynamicResource BgSurfaceBrush}"
+                            BorderThickness="2" BorderBrush="{DynamicResource BorderBrush}"
                             Margin="20,0,0,0">
                         <Grid>
                             <TextBlock Text="👆" FontSize="40" HorizontalAlignment="Center"

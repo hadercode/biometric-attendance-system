@@ -14,10 +14,10 @@
             <Border Style="{StaticResource CardBorder}" Margin="0,0,0,20">
                 <StackPanel HorizontalAlignment="Center">
                     <TextBlock Text="{Binding CurrentTime}" FontSize="72" FontWeight="Bold"
-                               Foreground="{StaticResource TextPrimaryBrush}"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
                                HorizontalAlignment="Center" FontFamily="Consolas"/>
                     <TextBlock Text="{Binding CurrentDate}" FontSize="16"
-                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center" Margin="0,4,0,0"/>
                 </StackPanel>
             </Border>
@@ -40,7 +40,7 @@
                                    Foreground="{StaticResource PrimaryLightBrush}"
                                    HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         <TextBlock Text="Total Empleados" FontSize="12"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -53,7 +53,7 @@
                                    Foreground="{StaticResource SuccessBrush}"
                                    HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         <TextBlock Text="Presentes Hoy" FontSize="12"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -66,71 +66,11 @@
                                    Foreground="{StaticResource DangerBrush}"
                                    HorizontalAlignment="Center" Margin="0,8,0,0"/>
                         <TextBlock Text="Ausentes Hoy" FontSize="12"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </Grid>
-
-            <!-- ═══ Fingerprint Capture Section ═══ -->
-            <Border Style="{StaticResource CardBorder}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="Marcar Asistencia" FontSize="20" FontWeight="Bold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-
-                        <TextBlock FontSize="14" TextWrapping="Wrap" Margin="0,0,0,16">
-                            <TextBlock.Foreground>
-                                <SolidColorBrush Color="{Binding StatusMessageColor}"/>
-                            </TextBlock.Foreground>
-                            <TextBlock.Text>
-                                <Binding Path="StatusMessage"/>
-                            </TextBlock.Text>
-                        </TextBlock>
-
-                        <!-- Result Info -->
-                        <StackPanel Visibility="{Binding ShowResult, Converter={StaticResource BoolToVis}}"
-                                    Margin="0,0,0,16">
-                            <TextBlock Text="{Binding IdentifiedEmployeeName}" FontSize="24" FontWeight="Bold"
-                                       Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <Border CornerRadius="6" Padding="12,6" HorizontalAlignment="Left" Margin="0,8,0,0"
-                                    Background="{StaticResource BgSurfaceBrush}">
-                                <TextBlock Text="{Binding AttendanceTypeBadge}" FontSize="16" FontWeight="SemiBold"
-                                           Foreground="{StaticResource AccentBrush}"/>
-                            </Border>
-                        </StackPanel>
-
-                        <Button Style="{StaticResource PrimaryButton}"
-                                Command="{Binding CaptureAndIdentifyCommand}"
-                                IsEnabled="{Binding IsCapturing, Converter={conv:InverseBoolConverter}}"
-                                HorizontalAlignment="Left">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="👆" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Capturar Huella" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-
-                    <!-- Fingerprint Image Display -->
-                    <Border Grid.Column="1" Width="200" Height="240" CornerRadius="12"
-                            Background="{StaticResource BgSurfaceBrush}"
-                            BorderThickness="2" BorderBrush="{StaticResource BorderBrush}"
-                            Margin="20,0,0,0">
-                        <Grid>
-                            <TextBlock Text="👆" FontSize="48" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" Opacity="0.3"
-                                       Visibility="{Binding FingerprintImage, Converter={StaticResource NullToVisConverter}}"/>
-                            <Image Source="{Binding FingerprintImage}" Stretch="Uniform" Margin="8"/>
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
-
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -86,6 +86,11 @@ namespace LectorHuellas.Core.Services
 
         public (int width, int height) GetImageSize() => (_width, _height);
 
+        public void CancelCurrentOperation()
+        {
+            Console.WriteLine("Simulador: Cancelación solicitada.");
+        }
+
         private byte[] GenerateSyntheticFingerprint(int seed)
         {
             var size = _width * _height;

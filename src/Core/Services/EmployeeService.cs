@@ -105,32 +105,76 @@ namespace LectorHuellas.Core.Services
                 .ToListAsync();
         }
 
-        public async Task<List<Employee>> GetEmployeesPaginatedAsync(int page, int pageSize, string? searchTerm = null)
+        public async Task<List<Employee>> GetEmployeesPaginatedAsync(int page, int pageSize, string? searchTerm = null, string? sortColumn = null, bool sortDescending = false, string? departmentId = null, string? nameFilter = null)
         {
             using var db = new AppDbContext();
-            var query = db.Employees.Where(e => e.Status == 1);
+            var query = db.Employees
+                .Include(e => e.Department)
+                .Where(e => e.Status == 1);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(e => e.Code.Contains(searchTerm));
+                query = query.Where(e => e.Code.Contains(searchTerm) || 
+                                     e.FirstNames.Contains(searchTerm) || 
+                                     e.LastNames.Contains(searchTerm));
+            }
+
+            if (!string.IsNullOrWhiteSpace(departmentId))
+            {
+                query = query.Where(e => e.DepartmentId == departmentId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(nameFilter))
+            {
+                query = query.Where(e => e.FirstNames.Contains(nameFilter) || 
+                                     e.LastNames.Contains(nameFilter));
+            }
+
+            // Sorting logic
+            if (!string.IsNullOrEmpty(sortColumn))
+            {
+                query = sortColumn.ToLower() switch
+                {
+                    "code" => sortDescending ? query.OrderByDescending(e => e.Code) : query.OrderBy(e => e.Code),
+                    "firstnames" => sortDescending ? query.OrderByDescending(e => e.FirstNames) : query.OrderBy(e => e.FirstNames),
+                    "lastnames" => sortDescending ? query.OrderByDescending(e => e.LastNames) : query.OrderBy(e => e.LastNames),
+                    "department" => sortDescending ? query.OrderByDescending(e => e.Department!.Name) : query.OrderBy(e => e.Department!.Name),
+                    "hiredate" => sortDescending ? query.OrderByDescending(e => e.HireDate) : query.OrderBy(e => e.HireDate),
+                    _ => query.OrderBy(e => e.LastNames).ThenBy(e => e.FirstNames)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(e => e.LastNames).ThenBy(e => e.FirstNames);
             }
 
             return await query
-                .OrderBy(e => e.LastNames)
-                .ThenBy(e => e.FirstNames)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
         }
 
-        public async Task<int> GetTotalEmployeesCountAsync(string? searchTerm = null)
+        public async Task<int> GetTotalEmployeesCountAsync(string? searchTerm = null, string? departmentId = null, string? nameFilter = null)
         {
             using var db = new AppDbContext();
             var query = db.Employees.Where(e => e.Status == 1);
 
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(e => e.Code.Contains(searchTerm));
+                query = query.Where(e => e.Code.Contains(searchTerm) || 
+                                     e.FirstNames.Contains(searchTerm) || 
+                                     e.LastNames.Contains(searchTerm));
+            }
+
+            if (!string.IsNullOrWhiteSpace(departmentId))
+            {
+                query = query.Where(e => e.DepartmentId == departmentId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(nameFilter))
+            {
+                query = query.Where(e => e.FirstNames.Contains(nameFilter) || 
+                                     e.LastNames.Contains(nameFilter));
             }
 
             return await query.CountAsync();

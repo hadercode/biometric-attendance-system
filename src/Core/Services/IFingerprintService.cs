@@ -61,5 +61,10 @@ namespace LectorHuellas.Core.Services
         /// Get the image dimensions from the scanner
         /// </summary>
         (int width, int height) GetImageSize();
+
+        /// <summary>
+        /// Explicitly cancel any pending SDK operation (enrollment/identification)
+        /// </summary>
+        void CancelCurrentOperation();
     }
 }

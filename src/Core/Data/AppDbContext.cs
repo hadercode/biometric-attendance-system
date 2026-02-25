@@ -14,6 +14,7 @@ namespace LectorHuellas.Core.Data
         public DbSet<Unit> Units { get; set; } = null!;
         public DbSet<Shift> Shifts { get; set; } = null!;
         public DbSet<Management> Managements { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
 
         private readonly DatabaseSettings? _settings;
 
@@ -82,6 +83,14 @@ namespace LectorHuellas.Core.Data
                 entity.Property(e => e.LeaveDate).HasColumnName("fechae");
                 entity.Property(e => e.Message).HasColumnName("mensaje");
                 entity.Property(e => e.Listar).HasColumnName("listar");
+
+                entity.HasOne(e => e.Management)
+                      .WithMany()
+                      .HasForeignKey(e => e.ManagementId);
+
+                entity.HasOne(e => e.Department)
+                      .WithMany()
+                      .HasForeignKey(e => e.DepartmentId);
             });
 
             modelBuilder.Entity<AttendanceRecord>(entity =>
@@ -163,6 +172,18 @@ namespace LectorHuellas.Core.Data
                 entity.HasKey(e => e.Code);
                 entity.Property(e => e.Code).HasColumnName("codigo");
                 entity.Property(e => e.Name).HasColumnName("gerencia");
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("usuarios");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+                entity.Property(e => e.Username).HasColumnName("usuario").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Password).HasColumnName("password").IsRequired().HasMaxLength(100);
+                entity.Property(e => e.FullName).HasColumnName("nombre").HasMaxLength(100);
+                entity.Property(e => e.RolId).HasColumnName("rol_id");
+                entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20);
             });
         }
 

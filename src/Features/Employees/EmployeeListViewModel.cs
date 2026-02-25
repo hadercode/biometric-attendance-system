@@ -11,12 +11,28 @@ namespace LectorHuellas.Features.Employees
     public partial class EmployeeListViewModel : ObservableObject
     {
         private readonly IEmployeeService _employeeService;
+        private readonly ICommonService _commonService;
 
         [ObservableProperty]
-        private ObservableCollection<Employee> _employees = new();
+        private ObservableCollection<Department> _departments = new();
 
         [ObservableProperty]
-        private Employee? _selectedEmployee;
+        private string? _selectedDepartmentId;
+
+        [ObservableProperty]
+        private string _nameFilter = string.Empty;
+
+        [ObservableProperty]
+        private ObservableCollection<EmployeeDisplayWrapper> _employees = new();
+
+        [ObservableProperty]
+        private EmployeeDisplayWrapper? _selectedEmployee;
+
+        [ObservableProperty]
+        private string _sortColumn = "LastNames";
+
+        [ObservableProperty]
+        private bool _isSortDescending = false;
 
         [ObservableProperty]
         private bool _isLoading;
@@ -44,9 +60,17 @@ namespace LectorHuellas.Features.Employees
 
         public event EventHandler<Employee>? EditEmployeeRequested;
 
-        public EmployeeListViewModel(IEmployeeService employeeService)
+        public EmployeeListViewModel(IEmployeeService employeeService, ICommonService commonService)
         {
             _employeeService = employeeService;
+            _commonService = commonService;
+            _ = LoadDepartmentsAsync();
+        }
+
+        private async Task LoadDepartmentsAsync()
+        {
+            var deps = await _commonService.GetDepartmentsAsync();
+            Departments = new ObservableCollection<Department>(deps);
         }
 
         [RelayCommand]
@@ -57,15 +81,23 @@ namespace LectorHuellas.Features.Employees
             IsLoading = true;
             try
             {
-                TotalRecords = await _employeeService.GetTotalEmployeesCountAsync(SearchText);
+                TotalRecords = await _employeeService.GetTotalEmployeesCountAsync(SearchText, SelectedDepartmentId, NameFilter);
                 TotalPages = (int)Math.Ceiling((double)TotalRecords / PageSize);
                 if (TotalPages == 0) TotalPages = 1;
 
                 if (CurrentPage > TotalPages) CurrentPage = TotalPages;
                 if (CurrentPage < 1) CurrentPage = 1;
 
-                var list = await _employeeService.GetEmployeesPaginatedAsync(CurrentPage, PageSize, SearchText);
-                Employees = new ObservableCollection<Employee>(list);
+                var list = await _employeeService.GetEmployeesPaginatedAsync(CurrentPage, PageSize, SearchText, SortColumn, IsSortDescending, SelectedDepartmentId, NameFilter);
+                
+                var startNumber = (CurrentPage - 1) * PageSize + 1;
+                var displayList = list.Select((e, i) => new EmployeeDisplayWrapper 
+                { 
+                    Employee = e, 
+                    Index = startNumber + i 
+                }).ToList();
+
+                Employees = new ObservableCollection<EmployeeDisplayWrapper>(displayList);
 
                 UpdateNavigationState();
             }
@@ -107,14 +139,50 @@ namespace LectorHuellas.Features.Employees
 
         partial void OnSearchTextChanged(string value)
         {
-            CurrentPage = 1; // Reset to page 1 on search
+            CurrentPage = 1;
+            _ = Refresh();
+        }
+
+        partial void OnSelectedDepartmentIdChanged(string? value)
+        {
+            CurrentPage = 1;
+            _ = Refresh();
+        }
+
+        partial void OnNameFilterChanged(string value)
+        {
+            CurrentPage = 1;
             _ = Refresh();
         }
 
         [RelayCommand]
-        private void EditEmployee(Employee? employee)
+        private async Task ClearFilters()
         {
-            var target = employee ?? SelectedEmployee;
+            NameFilter = string.Empty;
+            SelectedDepartmentId = null;
+            SearchText = string.Empty;
+            await Refresh();
+        }
+
+        [RelayCommand]
+        private async Task Sort(string column)
+        {
+            if (SortColumn == column)
+            {
+                IsSortDescending = !IsSortDescending;
+            }
+            else
+            {
+                SortColumn = column;
+                IsSortDescending = false;
+            }
+            await Refresh();
+        }
+
+        [RelayCommand]
+        private void EditEmployee(EmployeeDisplayWrapper? wrapper)
+        {
+            var target = wrapper?.Employee ?? SelectedEmployee?.Employee;
             if (target != null)
             {
                 EditEmployeeRequested?.Invoke(this, target);
@@ -122,9 +190,9 @@ namespace LectorHuellas.Features.Employees
         }
 
         [RelayCommand]
-        private async Task DeleteEmployee(Employee? employee)
+        private async Task DeleteEmployee(EmployeeDisplayWrapper? wrapper)
         {
-            var target = employee ?? SelectedEmployee;
+            var target = wrapper?.Employee ?? SelectedEmployee?.Employee;
             if (target == null) return;
 
             // Check for attendance history first
@@ -158,5 +226,11 @@ namespace LectorHuellas.Features.Employees
                 await Refresh();
             }
         }
+    }
+
+    public class EmployeeDisplayWrapper
+    {
+        public Employee Employee { get; set; } = null!;
+        public int Index { get; set; }
     }
 }
