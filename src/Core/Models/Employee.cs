@@ -8,6 +8,8 @@ namespace LectorHuellas.Core.Models
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string DocumentId { get; set; } = string.Empty;
+        public string Position { get; set; } = "Empleado"; // New field
+        public string? PhotoPath { get; set; } // New field
         public byte[]? FingerprintTemplate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public bool IsActive { get; set; } = true;

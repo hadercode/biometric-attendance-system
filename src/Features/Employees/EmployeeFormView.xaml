@@ -33,7 +33,33 @@
                                Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                     <TextBox Style="{StaticResource ModernTextBox}"
                              Text="{Binding DocumentId, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,4"/>
+                             Margin="0,0,0,16"/>
+
+                    <!-- Position -->
+                    <TextBlock Text="Cargo / Puesto" FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <TextBox Style="{StaticResource ModernTextBox}"
+                             Text="{Binding Position, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- Photo Selection -->
+                    <TextBlock Text="Foto del Empleado" FontSize="12" FontWeight="Medium"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="60" Height="60" CornerRadius="30" Background="{StaticResource BgSurfaceBrush}" ClipToBounds="True">
+                            <Grid>
+                                <TextBlock Text="👤" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.3"/>
+                                <Image Source="{Binding PhotoPath}" Stretch="UniformToFill"/>
+                            </Grid>
+                        </Border>
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" 
+                                Content="Seleccionar Foto..." Command="{Binding SelectPhotoCommand}"
+                                Margin="16,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    </Grid>
                 </StackPanel>
             </Border>
 

@@ -31,6 +31,12 @@ namespace LectorHuellas.Features.Employees
         private string _documentId = "";
 
         [ObservableProperty]
+        private string _position = "Empleado"; // New field
+
+        [ObservableProperty]
+        private string _photoPath = ""; // New field
+
+        [ObservableProperty]
         private string _formTitle = "Nuevo Empleado";
 
         [ObservableProperty]
@@ -87,6 +93,8 @@ namespace LectorHuellas.Features.Employees
             _editingEmployeeId = null;
             FullName = "";
             DocumentId = "";
+            Position = "Empleado";
+            PhotoPath = "";
             FormTitle = "Nuevo Empleado";
             IsEditing = false;
             HasFingerprint = false;
@@ -105,6 +113,8 @@ namespace LectorHuellas.Features.Employees
             _editingEmployeeId = employee.Id;
             FullName = employee.FullName;
             DocumentId = employee.DocumentId;
+            Position = employee.Position;
+            PhotoPath = employee.PhotoPath;
             FormTitle = "Editar Empleado";
             IsEditing = true;
             FingerprintImage = null;
@@ -217,6 +227,21 @@ namespace LectorHuellas.Features.Employees
         }
 
         [RelayCommand]
+        private void SelectPhoto()
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Imágenes|*.jpg;*.jpeg;*.png;*.bmp",
+                Title = "Seleccionar Foto del Empleado"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                PhotoPath = dialog.FileName;
+            }
+        }
+
+        [RelayCommand]
         private async Task Save()
         {
             if (string.IsNullOrWhiteSpace(FullName))
@@ -245,7 +270,7 @@ namespace LectorHuellas.Features.Employees
                 if (IsEditing && _editingEmployeeId.HasValue)
                 {
                     await _attendanceService.UpdateEmployeeAsync(
-                        _editingEmployeeId.Value, FullName.Trim(), DocumentId.Trim(), primaryTemplate);
+                        _editingEmployeeId.Value, FullName.Trim(), DocumentId.Trim(), Position.Trim(), PhotoPath, primaryTemplate);
 
                     // Save all fingerprints
                     await _attendanceService.SaveEmployeeFingerprintsAsync(_editingEmployeeId.Value, _enrolledFingers);
@@ -253,7 +278,7 @@ namespace LectorHuellas.Features.Employees
                 else
                 {
                     var employee = await _attendanceService.RegisterEmployeeAsync(
-                        FullName.Trim(), DocumentId.Trim(), primaryTemplate);
+                        FullName.Trim(), DocumentId.Trim(), Position.Trim(), PhotoPath, primaryTemplate);
 
                     // Save all fingerprints
                     await _attendanceService.SaveEmployeeFingerprintsAsync(employee.Id, _enrolledFingers);

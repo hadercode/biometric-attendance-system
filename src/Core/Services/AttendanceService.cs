@@ -19,13 +19,15 @@ namespace LectorHuellas.Core.Services
 
         // ── Employee Management ─────────────────────────────────────────
 
-        public async Task<Employee> RegisterEmployeeAsync(string fullName, string documentId, byte[] fingerprintTemplate)
+        public async Task<Employee> RegisterEmployeeAsync(string fullName, string documentId, string position, string photoPath, byte[] fingerprintTemplate)
         {
             using var db = new AppDbContext();
             var employee = new Employee
             {
                 FullName = fullName,
                 DocumentId = documentId,
+                Position = position,
+                PhotoPath = photoPath, // New field
                 FingerprintTemplate = fingerprintTemplate,
                 CreatedAt = DateTime.Now,
                 IsActive = true
@@ -36,7 +38,7 @@ namespace LectorHuellas.Core.Services
             return employee;
         }
 
-        public async Task<Employee?> UpdateEmployeeAsync(int id, string fullName, string documentId, byte[]? newTemplate = null)
+        public async Task<Employee?> UpdateEmployeeAsync(int id, string fullName, string documentId, string position, string photoPath, byte[]? newTemplate = null)
         {
             using var db = new AppDbContext();
             var employee = await db.Employees.FindAsync(id);
@@ -44,6 +46,8 @@ namespace LectorHuellas.Core.Services
 
             employee.FullName = fullName;
             employee.DocumentId = documentId;
+            employee.Position = position;
+            employee.PhotoPath = photoPath; // New field
             if (newTemplate != null)
                 employee.FingerprintTemplate = newTemplate;
 
@@ -206,6 +210,38 @@ namespace LectorHuellas.Core.Services
             return null;
         }
 
+        /// <summary>
+        /// Highly optimized flow for ID Card screen: Uses SDK native 1:N identification
+        /// Handles capture UI (callbacks) and matching in a single SDK call.
+        /// </summary>
+        public async Task<(Employee Employee, AttendanceType Type)?> IdentifyAndRecordAsync()
+        {
+            // 1. Get all templates and map them to Employee IDs
+            // Note: We need to preserve the order for the index-based match result
+            var templatesWithEmp = await GetAllTemplatesForIdentificationAsync();
+            if (templatesWithEmp.Count == 0) return null;
+
+            var templates = templatesWithEmp.Select(t => t.templateData).ToList();
+            var empIds = templatesWithEmp.Select(t => t.employeeId).ToList();
+
+            // 2. Call SDK native Identification (1:N)
+            var (matchIndex, imageData) = await _fingerprintService.IdentifyFingerprintAsync(templates);
+
+            if (matchIndex < 0 || matchIndex >= empIds.Count)
+                return null;
+
+            int matchedEmployeeId = empIds[matchIndex];
+
+            // 3. Record attendance
+            var (record, type) = await RecordAttendanceAsync(matchedEmployeeId);
+            
+            // 4. Get full employee info
+            var employee = await GetEmployeeByIdAsync(matchedEmployeeId);
+            if (employee == null) return null;
+
+            return (employee, type);
+        }
+
         // ── Attendance ──────────────────────────────────────────────────
 
         /// <summary>
@@ -271,6 +307,17 @@ namespace LectorHuellas.Core.Services
                 .CountAsync();
 
             return (totalEmployees, presentToday, totalEmployees - presentToday);
+        }
+        public async Task<List<AttendanceRecord>> GetRecentRecordsAsync(int count = 10)
+        {
+            using var db = new AppDbContext();
+            var today = DateTime.Today;
+            return await db.AttendanceRecords
+                .Include(r => r.Employee)
+                .Where(r => r.Timestamp >= today)
+                .OrderByDescending(r => r.Timestamp)
+                .Take(count)
+                .ToListAsync();
         }
     }
 }

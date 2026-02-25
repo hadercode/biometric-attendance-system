@@ -3,23 +3,39 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LectorHuellas.Core.Services;
+using LectorHuellas.Features.Attendance;
 using LectorHuellas.Features.Dashboard;
 using LectorHuellas.Features.Employees;
+using LectorHuellas.Features.Auth;
 using LectorHuellas.Features.Reports;
 using LectorHuellas.Features.Settings;
 
 namespace LectorHuellas.Features.Main
 {
+    public enum AppMode
+    {
+        Public, // Attendance ID Card
+        Auth,   // Login Screen
+        Admin   // Dashboard & Management
+    }
+
     public partial class MainViewModel : ObservableObject
     {
         private readonly IFingerprintService _fingerprintService;
         private readonly AttendanceService _attendanceService;
 
         [ObservableProperty]
-        private object? _currentView;
+        [NotifyPropertyChangedFor(nameof(IsPublicMode))]
+        [NotifyPropertyChangedFor(nameof(IsAuthMode))]
+        [NotifyPropertyChangedFor(nameof(IsAdminMode))]
+        private AppMode _currentMode = AppMode.Public;
+
+        public bool IsPublicMode => CurrentMode == AppMode.Public;
+        public bool IsAuthMode => CurrentMode == AppMode.Auth;
+        public bool IsAdminMode => CurrentMode == AppMode.Admin;
 
         [ObservableProperty]
-        private string _currentPage = "Dashboard";
+        private string _currentPage = "Attendance";
 
         [ObservableProperty]
         private string _deviceStatus = "Desconectado";
@@ -31,6 +47,8 @@ namespace LectorHuellas.Features.Main
         private bool _isSimulated;
 
         // Child ViewModels
+        public AttendanceViewModel AttendanceVM { get; }
+        public LoginViewModel LoginVM { get; }
         public DashboardViewModel DashboardVM { get; }
         public EmployeeListViewModel EmployeeListVM { get; }
         public EmployeeFormViewModel EmployeeFormVM { get; }
@@ -42,6 +60,9 @@ namespace LectorHuellas.Features.Main
             _fingerprintService = fingerprintService;
             _attendanceService = attendanceService;
 
+            // Initialize all child ViewModels
+            AttendanceVM = new AttendanceViewModel(fingerprintService, attendanceService);
+            LoginVM = new LoginViewModel();
             DashboardVM = new DashboardViewModel(fingerprintService, attendanceService);
             EmployeeListVM = new EmployeeListViewModel(attendanceService);
             EmployeeFormVM = new EmployeeFormViewModel(fingerprintService, attendanceService);
@@ -53,7 +74,33 @@ namespace LectorHuellas.Features.Main
             DeviceStatus = IsSimulated ? "🔧 Modo Simulado" :
                            IsDeviceConnected ? "✅ FS80H Conectado" : "❌ Desconectado";
 
-            // Wire up navigation events
+            // Initialize Attendance (only history)
+            _ = AttendanceVM.RefreshHistoryAsync();
+
+            // Wire up Attendance events
+            AttendanceVM.AdminAccessRequested += (s, e) => 
+            {
+                CurrentMode = AppMode.Auth;
+                CurrentPage = "Login";
+            };
+
+            // Wire up Auth events
+            LoginVM.LoginSuccess += (s, e) =>
+            {
+                CurrentMode = AppMode.Admin;
+                NavigateToPage("Dashboard");
+                LoginVM.Clear();
+            };
+
+            LoginVM.BackRequested += (s, e) =>
+            {
+                CurrentMode = AppMode.Public;
+                CurrentPage = "Attendance";
+                LoginVM.Clear();
+                _ = AttendanceVM.RefreshHistoryAsync();
+            };
+
+            // Wire up Employee management events
             EmployeeListVM.EditEmployeeRequested += (_, emp) =>
             {
                 EmployeeFormVM.LoadEmployee(emp);
@@ -94,6 +141,14 @@ namespace LectorHuellas.Features.Main
         {
             EmployeeFormVM.Clear();
             NavigateToPage("EmployeeForm");
+        }
+
+        [RelayCommand]
+        private void Logout()
+        {
+            CurrentMode = AppMode.Public;
+            CurrentPage = "Attendance";
+            _ = AttendanceVM.RefreshHistoryAsync();
         }
     }
 }

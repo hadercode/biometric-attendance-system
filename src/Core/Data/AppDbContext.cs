@@ -61,6 +61,8 @@ namespace LectorHuellas.Core.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.FullName).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.DocumentId).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Position).IsRequired().HasMaxLength(150); // New property
+                entity.Property(e => e.PhotoPath).HasMaxLength(400); // New property
                 entity.HasIndex(e => e.DocumentId).IsUnique();
                 entity.Property(e => e.FingerprintTemplate);
             });

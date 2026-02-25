@@ -121,7 +121,12 @@ namespace LectorHuellas.Shared.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value?.ToString() == parameter?.ToString()
+            if (value == null || parameter == null) return Visibility.Collapsed;
+
+            string valStr = value.ToString() ?? string.Empty;
+            string paramStr = parameter.ToString() ?? string.Empty;
+
+            return string.Equals(valStr, paramStr, StringComparison.OrdinalIgnoreCase)
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         }
@@ -200,5 +205,24 @@ namespace LectorHuellas.Shared.Converters
         }
 
         public override object ProvideValue(IServiceProvider serviceProvider) => this;
+    }
+
+    /// <summary>
+    /// Converts boolean to one of two strings (parameter format: "TrueString|FalseString")
+    /// </summary>
+    public class BoolToTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var parts = parameter?.ToString()?.Split('|') ?? new[] { "True", "False" };
+            if (parts.Length < 2) return value?.ToString() ?? "";
+            
+            return (value is bool b && b) ? parts[0] : parts[1];
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
