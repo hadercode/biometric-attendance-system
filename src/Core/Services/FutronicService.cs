@@ -424,14 +424,24 @@ namespace LectorHuellas.Core.Services
         {
             try
             {
-                // Most direct way: check how many devices are recognized by the low-level driver
-                int count = 0;
-                if (FtrScanApi.ftrScanGetNumberOfDevices(out count))
+                // 1. High-level check: Ask the SDK directly if it has a valid session/hardware access
+                // This is the most reliable check if the device is already initialized by us.
+                IntPtr val;
+                int res = FtrScanApi.FTRGetParam(FtrScanApi.FTR_PARAM_IMAGE_WIDTH, out val);
+                if (res == FtrScanApi.FTR_RETCODE_OK || res == FtrScanApi.FTR_RETCODE_ALREADY_IN_USE)
                 {
-                    return count > 0;
+                    return true;
+                }
+
+                // 2. Low-level check: check how many devices are recognized by the driver
+                // This is used when the SDK isn't yet "active" or after a total disconnection.
+                int count = 0;
+                if (FtrScanApi.ftrScanGetNumberOfDevices(out count) && count > 0)
+                {
+                    return true;
                 }
                 
-                // Fallback: try to open one directly
+                // 3. Last resort: try to open one directly (sometimes needed for cold-plug detection)
                 IntPtr handle = FtrScanApi.ftrScanOpenDevice();
                 if (handle != IntPtr.Zero)
                 {
