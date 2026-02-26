@@ -49,11 +49,13 @@ namespace LectorHuellas
                     "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
             };
 
+#if DEBUG
             AllocConsole();
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.WriteLine("═══════════════════════════════════════════");
             Console.WriteLine("  LectorHuellas - Control de Asistencia");
             Console.WriteLine("═══════════════════════════════════════════");
+#endif
 
             try
             {
@@ -346,7 +348,9 @@ namespace LectorHuellas
             }
         }
 
+#if DEBUG
         [System.Runtime.InteropServices.DllImport("kernel32.dll")]
         private static extern bool AllocConsole();
+#endif
     }
 }
