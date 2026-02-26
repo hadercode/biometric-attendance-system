@@ -184,6 +184,9 @@ namespace LectorHuellas.Core.Interop
 
         // ── ftrScanAPI.dll Functions (for device detection only) ─────────
         [DllImport(SCAN_DLL, CallingConvention = CallingConvention.StdCall)]
+        public static extern bool ftrScanGetNumberOfDevices(out int pNumberOfDevices);
+
+        [DllImport(SCAN_DLL, CallingConvention = CallingConvention.StdCall)]
         public static extern IntPtr ftrScanOpenDevice();
 
         [DllImport(SCAN_DLL, CallingConvention = CallingConvention.StdCall)]

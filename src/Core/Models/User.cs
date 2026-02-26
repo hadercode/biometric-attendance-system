@@ -7,8 +7,9 @@ namespace LectorHuellas.Core.Models
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
         public int RolId { get; set; }
-        public string Status { get; set; } = "Habilitado";
+        public int Status { get; set; } = 1;
     }
 }

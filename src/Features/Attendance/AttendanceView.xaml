@@ -7,11 +7,38 @@
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1024">
 
-    <Grid Background="{DynamicResource BgDarkBrush}">
+    <Grid>
+        <Grid.Style>
+            <Style TargetType="Grid">
+                <Setter Property="Background" Value="{DynamicResource BgDarkBrush}"/>
+                <Style.Triggers>
+                    <!-- Light Theme Background -->
+                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                        <Setter Property="Background">
+                            <Setter.Value>
+                                <ImageBrush ImageSource="pack://application:,,,/Shared/Controls/biometric_white.jpg" 
+                                            Stretch="UniformToFill" Opacity="0.8"/>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                    <!-- Dark Theme Background -->
+                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                        <Setter Property="Background">
+                            <Setter.Value>
+                                <ImageBrush ImageSource="pack://application:,,,/Shared/Controls/biometric_dark.jpg" 
+                                            Stretch="UniformToFill" Opacity="0.3"/>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>      <!-- Left: Main Stage -->
             <ColumnDefinition Width="380"/>    <!-- Right: Recent Activity -->
         </Grid.ColumnDefinitions>
+
 
         <!-- ═══ Navigation to Admin (Discreet) ═══ -->
         <Button Command="{Binding RequestAdminAccessCommand}"
@@ -26,28 +53,109 @@
 
         <!-- ═══ LEFT PANEL: Stage ═══ -->
         <Grid Grid.Column="0">
+        <!-- Bottom Left Scanner Status -->
+            <StackPanel Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Left" 
+                        Margin="30" Orientation="Horizontal">
+                <Border CornerRadius="12" Padding="12,6" Background="#44000000">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Margin="0,0,8,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsScannerDetected, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                            <Setter Property="Fill" Value="{StaticResource DangerBrush}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding DataContext.DeviceStatus, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                   Foreground="White" FontSize="11" VerticalAlignment="Center" FontWeight="Medium"/>
+                    </StackPanel>
+                </Border>
+                
+                <Button Command="{Binding DataContext.RetryScannerDetectionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                        Width="32" Height="32" Margin="10,0,0,0"
+                        Background="#44000000" VerticalAlignment="Center"
+                        Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                                <TextBlock Text="🔄" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="14" Foreground="White"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#66000000"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
             <!-- 1. Idle Background (Abstract shapes) -->
             <Path Data="M 0,0 L 300,0 L 0,300 Z" Fill="#086C5CE7" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             
             <!-- 2. Main Content (Clock & Status) -->
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <StackPanel Visibility="{Binding ShowCard, Converter={StaticResource InverseBoolToVis}}">
-                    <TextBlock Text="{Binding CurrentTime}" 
-                               FontSize="160" FontWeight="Bold" 
-                               Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"
-                               FontFamily="Segoe UI Light" Opacity="0.9"/>
+                    <!-- Readability Glass Overlay for Clock/Date -->
+                    <Border CornerRadius="40" Padding="60,30" Margin="0,0,0,32">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                        <Setter Property="Background" Value="#AAFFFFFF"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#44000000"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <TextBlock Text="{Binding CurrentTime}" 
+                                       FontSize="160" FontWeight="Bold" 
+                                       Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"
+                                       FontFamily="Segoe UI Light" Opacity="1.0"/>
 
-                    <TextBlock Text="{Binding CurrentDate}" 
-                               FontSize="24" FontWeight="SemiBold" 
-                               Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"
-                               Margin="0,-30,0,40" Opacity="0.7"/>
+                            <TextBlock Text="{Binding CurrentDate}" 
+                                       FontSize="24" FontWeight="SemiBold" 
+                                       Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"
+                                       Margin="0,-20,0,0" Opacity="1.0"/>
+                        </StackPanel>
+                    </Border>
                     
-                    <Border CornerRadius="30" Padding="40,24" Background="#15FFFFFF" HorizontalAlignment="Center">
+                    <!-- Status Message Box -->
+                    <Border CornerRadius="30" Padding="40,24" HorizontalAlignment="Center">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                        <Setter Property="Background" Value="#DDFFFFFF"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                        <Setter Property="Background" Value="#25FFFFFF"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="👆" FontSize="32" VerticalAlignment="Center" Margin="0,0,20,0"/>
                             <TextBlock Text="{Binding StatusMessage}" FontSize="24" FontWeight="Medium"
-                                       Foreground="{Binding StatusMessageColor, Converter={StaticResource ColorToBrushConverter}}" 
-                                       VerticalAlignment="Center"/>
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{Binding StatusMessageColor, Converter={StaticResource ColorToBrushConverter}}"/>
+                                        <Style.Triggers>
+                                            <!-- Handle default White color from VM to adapt to Light/Dark theme -->
+                                            <DataTrigger Binding="{Binding StatusMessageColor}" Value="White">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -106,11 +214,23 @@
                     </Grid>
                 </Border>
             </StackPanel>
+
+            
         </Grid>
 
         <!-- ═══ RIGHT PANEL: Recent Activity Feed ═══ -->
-        <Border Grid.Column="1" Background="{DynamicResource BgCardBrush}" 
+        <Border Grid.Column="1" 
                 BorderThickness="1,0,0,0" BorderBrush="{DynamicResource BorderBrush}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="{DynamicResource BgCardBrush}"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                            <Setter Property="Background" Value="#CCFFFFFF"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

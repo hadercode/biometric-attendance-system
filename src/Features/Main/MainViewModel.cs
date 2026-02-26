@@ -41,6 +41,7 @@ namespace LectorHuellas.Features.Main
 
         public bool CanConfigureSettings => _sessionService.CanConfigureSettings;
         public string UserDisplayName => _sessionService.CurrentUser?.FullName ?? "Usuario";
+        public int CurrentUserRoleId => _sessionService.CurrentUser?.RolId ?? 0;
 
         [ObservableProperty]
         private string _currentPage = "Attendance";
@@ -53,6 +54,12 @@ namespace LectorHuellas.Features.Main
 
         [ObservableProperty]
         private bool _isSimulated;
+
+        private readonly DispatcherTimer _connectionTimer;
+        private bool _isPollerActive = true;
+
+        [ObservableProperty]
+        private bool _isScannerDetected;
 
         // Child ViewModels
         public AttendanceViewModel AttendanceVM { get; }
@@ -87,8 +94,8 @@ namespace LectorHuellas.Features.Main
 
             IsDeviceConnected = fingerprintService.IsDeviceConnected;
             IsSimulated = fingerprintService.IsSimulated;
-            DeviceStatus = IsSimulated ? "🔧 Modo Simulado" :
-                           IsDeviceConnected ? "✅ FS80H Conectado" : "❌ Desconectado";
+            IsScannerDetected = IsDeviceConnected;
+            UpdateDeviceStatus();
 
             // Initialize Attendance (only history)
             _ = AttendanceVM.RefreshHistoryAsync();
@@ -129,6 +136,39 @@ namespace LectorHuellas.Features.Main
             {
                 NavigateToPage("Employees");
             };
+
+            // Setup connection poller
+            _connectionTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(3)
+            };
+            _connectionTimer.Tick += ConnectionTimer_Tick;
+            _connectionTimer.Start();
+        }
+
+        private void ConnectionTimer_Tick(object? sender, EventArgs e)
+        {
+            if (!_isPollerActive) return;
+
+            // We check for hardware regardless of being in simulation mode
+            // This allows auto-detecting plug-ins as well as disconnections
+            bool isHardwarePresent = FutronicService.StaticCheckPresence();
+            
+            // Handle Disconnection
+            if (IsScannerDetected && !isHardwarePresent)
+            {
+                Console.WriteLine("⚠️ Lector desconectado detectado.");
+                IsDeviceConnected = false;
+                IsScannerDetected = false;
+                UpdateDeviceStatus();
+            }
+            // Handle Plug-in (Hardware appeared)
+            else if (!IsScannerDetected && isHardwarePresent)
+            {
+                Console.WriteLine("🔌 Lector detectado (en espera de activación).");
+                IsScannerDetected = true;
+                UpdateDeviceStatus();
+            }
         }
 
         [RelayCommand]
@@ -183,8 +223,73 @@ namespace LectorHuellas.Features.Main
             OnPropertyChanged(nameof(IsDarkTheme));
         }
 
+        [RelayCommand]
+        private void RetryScannerDetection()
+        {
+            Console.WriteLine("🔄 Reintentando detección del lector...");
+            
+            // 1. Try to create and initialize a real Futronic service
+            var realService = new FutronicService();
+            if (realService.Initialize())
+            {
+                Console.WriteLine("✅ Lector detectado y activado!");
+                
+                // 2. Swap the service in the proxy
+                if (_fingerprintService is ScannerProxyService proxy)
+                {
+                    proxy.SetInternalService(realService);
+                }
+                
+                IsDeviceConnected = true;
+                IsSimulated = false;
+                IsScannerDetected = true;
+            }
+            else
+            {
+                Console.WriteLine("❌ No se encontró el lector real.");
+                realService.Dispose();
+                
+                IsDeviceConnected = false;
+                IsScannerDetected = false;
+                // Stay in simulated mode if that was the state
+            }
+            
+            UpdateDeviceStatus();
+            
+            // Restart scanning if we are in public mode
+            if (IsPublicMode)
+            {
+                AttendanceVM.StartScanning();
+            }
+        }
+
+        private void UpdateDeviceStatus()
+        {
+            if (IsDeviceConnected && !IsSimulated)
+            {
+                DeviceStatus = "✅ Conectado";
+            }
+            else if (!IsScannerDetected)
+            {
+                DeviceStatus = "❌ No detectado";
+            }
+            else if (IsSimulated)
+            {
+                // In simulated mode but hardware is present (awaiting activation)
+                DeviceStatus = "🔌 Pendiente (🔄)";
+            }
+            else
+            {
+                DeviceStatus = "❌ Desconectado";
+            }
+            
+            // Force property notification for UI triggers
+            OnPropertyChanged(nameof(IsScannerDetected));
+        }
+
         public void Dispose()
         {
+            _connectionTimer?.Stop();
             AttendanceVM.Dispose();
         }
     }

@@ -178,12 +178,13 @@ namespace LectorHuellas.Core.Data
             {
                 entity.ToTable("usuarios");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("id");
-                entity.Property(e => e.Username).HasColumnName("usuario").IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Id).HasColumnName("idusuarios");
+                entity.Property(e => e.Username).HasColumnName("nom_usuario").IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Password).HasColumnName("password").IsRequired().HasMaxLength(100);
-                entity.Property(e => e.FullName).HasColumnName("nombre").HasMaxLength(100);
-                entity.Property(e => e.RolId).HasColumnName("rol_id");
-                entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(20);
+                entity.Property(e => e.FirstName).HasColumnName("Nombre").HasMaxLength(100);
+                entity.Property(e => e.LastName).HasColumnName("Apellido").HasMaxLength(100);
+                entity.Property(e => e.RolId).HasColumnName("id_rol");
+                entity.Property(e => e.Status).HasColumnName("status");
             });
         }
 

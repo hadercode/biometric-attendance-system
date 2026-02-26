@@ -19,6 +19,12 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Shared\Controls\biometric_white.jpg" />
+    <Resource Include="Shared\Controls\biometric_dark.jpg" />
+  </ItemGroup>
+
+
   <!-- Copy native Futronic DLLs to output -->
   <ItemGroup>
     <None Include="libs\ftrScanAPI.dll">

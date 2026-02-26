@@ -74,7 +74,10 @@ namespace LectorHuellas
                 return;
             }
 
-            _fingerprintService = CreateFingerprintService();
+            var initialService = CreateFingerprintService();
+            var proxyService = new ScannerProxyService(initialService);
+            _fingerprintService = proxyService;
+            
             _employeeService = new EmployeeService();
             _commonService = new CommonService();
             _themeService = new ThemeService();
@@ -96,18 +99,59 @@ namespace LectorHuellas
                 if (!_mainVM.IsAdminMode) _mainVM.AttendanceVM.StartScanning();
             };
             
-            _mainVM.LoginVM.LoginSuccess += (s, ev) => 
+            _mainVM.LoginVM.LoginSuccess += async (s, ev) => 
             {
-                _loginWindow?.Close();
-                _attendanceWindow?.Hide();
-                _adminWindow = new AdminWindow { DataContext = _mainVM };
-                _adminWindow.Closed += (s2, ev2) => 
+                Console.WriteLine("🔑 LoginSuccess detectado en App.xaml.cs");
+                try 
                 {
-                    if (_mainVM.IsPublicMode) _attendanceWindow?.Show();
-                    else Shutdown();
-                };
-                _adminWindow.Show();
-                _mainVM.NavigateToPageCommand.Execute("Dashboard");
+                    // 1. Close login window
+                    if (_loginWindow != null)
+                    {
+                        Console.WriteLine("⏳ Cerrando ventana de login...");
+                        _loginWindow.Close();
+                        _loginWindow = null;
+                    }
+
+                    // 2. Hide attendance window (Main background)
+                    if (_attendanceWindow != null)
+                    {
+                        Console.WriteLine("⏳ Ocultando ventana de asistencia...");
+                        _attendanceWindow.Hide();
+                    }
+
+                    // 3. Create and show Admin window
+                    Console.WriteLine("⏳ Creando AdminWindow...");
+                    _adminWindow = new AdminWindow { DataContext = _mainVM };
+                    
+                    _adminWindow.Closed += (s2, ev2) => 
+                    {
+                        Console.WriteLine("🚪 AdminWindow cerrada.");
+                        if (_mainVM.IsPublicMode) 
+                        {
+                            Console.WriteLine("🔄 Volviendo a modo asistencia...");
+                            _attendanceWindow?.Show();
+                        }
+                        else 
+                        {
+                            Console.WriteLine("🛑 Cerrando aplicación...");
+                            Shutdown();
+                        }
+                    };
+
+                    Console.WriteLine("✨ Mostrando AdminWindow...");
+                    _adminWindow.Show();
+                    
+                    Console.WriteLine("📂 Navegando a Dashboard...");
+                    _mainVM.NavigateToPageCommand.Execute("Dashboard");
+                    
+                    Console.WriteLine("✅ Transición a Administración completada.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"\a❌ ERROR en transición a Admin: {ex.Message}");
+                    Console.WriteLine(ex.StackTrace);
+                    MessageBox.Show($"Error al abrir panel de administración:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             };
 
             _mainVM.LoginVM.BackRequested += (s, ev) => _loginWindow?.Close();

@@ -5,8 +5,8 @@
     <Color x:Key="BgCardColor">#FFFFFF</Color>
     <Color x:Key="BgSurfaceColor">#F8F9FA</Color>
     <Color x:Key="BorderColor">#D1D9E0</Color>
-    <Color x:Key="TextPrimaryColor">#1F2328</Color>
-    <Color x:Key="TextSecondaryColor">#656D76</Color>
+    <Color x:Key="TextPrimaryColor">#000000</Color>
+    <Color x:Key="TextSecondaryColor">#111111</Color>
 
     <SolidColorBrush x:Key="BgDarkBrush" Color="{StaticResource BgDarkColor}"/>
     <SolidColorBrush x:Key="BgCardBrush" Color="{StaticResource BgCardColor}"/>

@@ -420,6 +420,37 @@ namespace LectorHuellas.Core.Services
 
         public (int width, int height) GetImageSize() => (_imageWidth, _imageHeight);
 
+        public static bool StaticCheckPresence()
+        {
+            try
+            {
+                // Most direct way: check how many devices are recognized by the low-level driver
+                int count = 0;
+                if (FtrScanApi.ftrScanGetNumberOfDevices(out count))
+                {
+                    return count > 0;
+                }
+                
+                // Fallback: try to open one directly
+                IntPtr handle = FtrScanApi.ftrScanOpenDevice();
+                if (handle != IntPtr.Zero)
+                {
+                    FtrScanApi.ftrScanCloseDevice(handle);
+                    return true;
+                }
+                
+                return false;
+            }
+            catch { return false; }
+        }
+
+        public bool CheckDevicePresence()
+        {
+            bool present = StaticCheckPresence();
+            if (!present) _initialized = false;
+            return present;
+        }
+
         public void CancelCurrentOperation()
         {
             _isOperationCancelled = true;
@@ -432,7 +463,7 @@ namespace LectorHuellas.Core.Services
             {
                 if (_initialized)
                 {
-                    FtrScanApi.FTRTerminate();
+                    try { FtrScanApi.FTRTerminate(); } catch { }
                     Console.WriteLine("FTRAPI: Terminado.");
                 }
                 _disposed = true;

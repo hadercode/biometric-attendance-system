@@ -4,6 +4,21 @@ Historial detallado de issues encontrados y soluciones aplicadas durante el desa
 
 ---
 
+## [v2.1.0] — 2026-02-26 — Detección Robusta y UI Refinada
+
+### ✅ Nuevas Características
+- **Detección de Hardware en Tiempo Real**: Monitoreo constante del estado del lector con alertas visuales inmediatas al desconectar/conectar el USB.
+- **Documentación Contextual**: Sistema de ayuda interno integrado que detecta la pantalla actual y filtra contenido por rol de usuario.
+- **Estética "Glassmorphism"**: Nueva interfaz de asistencia con fondos dinámicos y paneles de cristal ultra-legibles.
+- **Reactivación Manual**: Botón de reintento (🔄) para reinicializar el lector sin cerrar la aplicación.
+
+### 🛠️ Correcciones Técnicas
+- Implementada detección de hardware vía `ftrScanGetNumberOfDevices` (evita conflictos de handles).
+- Corregida legibilidad en Modo Claro mediante contraste dinámico y sombras sutiles.
+- Filtrado de secciones sensibles en documentación para el rol de Capital Humano.
+
+---
+
 ## [v2.0.0] — 2026-02-25 — Multi-huella y Configuración de BD
 
 ### ✅ Nuevas Características
@@ -131,6 +146,42 @@ FTRAPI: NCC Correlación: 0.3355 (umbral: 0.4)
 **DLLs requeridas** (ambas x64 Redist):
 - `ftrScanAPI.dll` — Acceso al hardware del lector
 - `FTRAPI.dll` — API de alto nivel para biometría
+
+---
+
+### Issue #7: Lector no detectado automáticamente al desconectar
+**Síntoma**: Si se desenchufaba el lector USB mientras la app estaba abierta, el estado seguía diciendo "Conectado" hasta intentar una operación.
+
+**Causa**: La validación de estado solo ocurría al inicio o por demanda. Además, `StaticCheckPresence` intentaba abrir handles, lo cual fallaba si el SDK ya tenía el dispositivo bajo control.
+
+**Solución**: 
+- Implementar un `DispatcherTimer` en `MainViewModel` (polling cada 3s).
+- Usar `ftrScanGetNumberOfDevices` para consulta directa al driver sin necesidad de abrir el dispositivo.
+- Forzar actualización de propiedades en la UI mediante `OnPropertyChanged`.
+
+---
+
+### Issue #8: Texto ilegible en Modo Claro sobre imagen de fondo
+**Síntoma**: El texto blanco del modo oscuro era invisible sobre el fondo blanco del modo claro. Algunos mensajes de estado no cambiaban de color.
+
+**Causa**: Falta de contenedores de contraste y falta de triggers de tema en ciertos estilos de `TextBlock`.
+
+**Solución**:
+- Implementar fondos de cristal (Glassmorphism) con `Opacity` de 0.6.
+- Cambiar colores de texto a negro/gris oscuro explícitamente en el tema claro.
+- Usar triggers de `DynamicResource` en XAML para alternar estilos según el tema.
+
+---
+
+### Issue #9: Exposición de configuración técnica a perfiles no administrativos
+**Síntoma**: Usuarios de Recursos Humanos podían ver detalles de conexión a base de datos en la documentación.
+
+**Causa**: El manual era estático y contenía toda la información técnica.
+
+**Solución**:
+- Implementar `DocumentationWindow` dinámico.
+- Pasar el `RolId` a la ventana de documentación.
+- Filtrar bloques de `FlowDocument` programáticamente antes de mostrar la ventana.
 
 ---
 

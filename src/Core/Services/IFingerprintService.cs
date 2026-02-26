@@ -63,6 +63,12 @@ namespace LectorHuellas.Core.Services
         (int width, int height) GetImageSize();
 
         /// <summary>
+        /// Check if the physical device is still present/connected.
+        /// Useful for background polling.
+        /// </summary>
+        bool CheckDevicePresence();
+
+        /// <summary>
         /// Explicitly cancel any pending SDK operation (enrollment/identification)
         /// </summary>
         void CancelCurrentOperation();

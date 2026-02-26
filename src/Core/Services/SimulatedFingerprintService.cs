@@ -57,11 +57,17 @@ namespace LectorHuellas.Core.Services
             {
                 if (!_initialized || templates == null || templates.Count == 0)
                     return (-1, (byte[]?)null);
+                
                 Task.Delay(800).Wait();
                 _captureCounter++;
                 var imageData = GenerateSyntheticFingerprint(_captureCounter);
-                // In simulation, always match the first template
-                return (0, (byte[]?)imageData);
+
+                // In simulation, we return -2 (Silent/No finger) by default to prevent notification spam.
+                // Test values:
+                //  0: Successful match
+                // -1: Match failed (shows error)
+                // -2: Silent (no finger detected)
+                return (-2, (byte[]?)imageData);
             });
         }
 
@@ -85,6 +91,8 @@ namespace LectorHuellas.Core.Services
         }
 
         public (int width, int height) GetImageSize() => (_width, _height);
+
+        public bool CheckDevicePresence() => _initialized;
 
         public void CancelCurrentOperation()
         {

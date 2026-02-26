@@ -7,6 +7,7 @@
         xmlns:reports="clr-namespace:LectorHuellas.Features.Reports"
         xmlns:settings="clr-namespace:LectorHuellas.Features.Settings"
         xmlns:conv="clr-namespace:LectorHuellas.Shared.Converters"
+        xmlns:ctrl="clr-namespace:LectorHuellas.Shared.Controls"
         Title="Panel de Administración — Control de Asistencia"
         Width="1280" Height="800" MinWidth="1024" MinHeight="700"
         WindowStartupLocation="CenterScreen"
@@ -38,12 +39,50 @@
                                    HorizontalAlignment="Center" Margin="0,12,0,0"/>
 
                         <!-- Device Status -->
-                        <Border Margin="0,16,0,0" CornerRadius="8" Padding="10,6"
-                                Background="{DynamicResource BgSurfaceBrush}">
-                            <TextBlock Text="{Binding DeviceStatus}" FontSize="11"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       HorizontalAlignment="Center" FontWeight="Medium"/>
-                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                            <Border CornerRadius="8" Padding="10,6">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#1A00CEC9"/> <!-- Accent-ish -->
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsScannerDetected}" Value="False">
+                                                <Setter Property="Background" Value="#1AFF7675"/> <!-- Danger-ish -->
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding DeviceStatus}" FontSize="11" FontWeight="Medium">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsScannerDetected}" Value="False">
+                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                            
+                            <!-- Retry Button -->
+                            <Button Command="{Binding RetryScannerDetectionCommand}"
+                                    Width="30" Height="28" Margin="8,0,0,0"
+                                    Background="{DynamicResource BgSurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    ToolTip="Reintentar detección del lector"
+                                    Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="1" CornerRadius="6">
+                                            <TextBlock Text="🔄" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="12"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -73,7 +112,7 @@
                     <RadioButton Style="{StaticResource NavButton}"
                                  IsChecked="{Binding CurrentPage, Converter={StaticResource StringMatchConverter}, ConverterParameter=Settings, Mode=OneWay}"
                                  Command="{Binding NavigateToPageCommand}" CommandParameter="Settings"
-                                 Visibility="{Binding CanConfigureSettings, Converter={StaticResource BoolToVisConverter}}">
+                                 Visibility="{Binding CanConfigureSettings, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="⚙️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Configuración" VerticalAlignment="Center"/>
@@ -106,6 +145,8 @@
                     </StackPanel>
                 </Border>
 
+
+
                 <!-- Spacer -->
                 <Border/>
             </DockPanel>
@@ -113,30 +154,40 @@
 
         <!-- ═══ Admin Content Area ═══ -->
         <Grid Grid.Column="1" Background="{DynamicResource BgDarkBrush}">
-            <!-- Dashboard -->
-            <dashboard:DashboardView DataContext="{Binding DashboardVM}"
-                                 Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
-                                               Converter={StaticResource PageVisConverter}, ConverterParameter=Dashboard}"/>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <Grid Grid.Row="0">
+                <!-- Dashboard -->
+                <dashboard:DashboardView DataContext="{Binding DashboardVM}"
+                                     Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
+                                                   Converter={StaticResource PageVisConverter}, ConverterParameter=Dashboard}"/>
 
-            <!-- Employee List -->
-            <employees:EmployeeListView DataContext="{Binding EmployeeListVM}"
-                                    Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
-                                                 Converter={StaticResource PageVisConverter}, ConverterParameter=Employees}"/>
-
-            <!-- Employee Form -->
-            <employees:EmployeeFormView DataContext="{Binding EmployeeFormVM}"
-                                    Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
-                                                 Converter={StaticResource PageVisConverter}, ConverterParameter=EmployeeForm}"/>
-
-            <!-- Reports -->
-            <reports:AttendanceReportView DataContext="{Binding AttendanceReportVM}"
+                <!-- Employee List -->
+                <employees:EmployeeListView DataContext="{Binding EmployeeListVM}"
                                         Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
-                                                     Converter={StaticResource PageVisConverter}, ConverterParameter=Reports}"/>
+                                                     Converter={StaticResource PageVisConverter}, ConverterParameter=Employees}"/>
 
-            <!-- Settings -->
-            <settings:SettingsView DataContext="{Binding SettingsVM}"
-                                Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
-                                             Converter={StaticResource PageVisConverter}, ConverterParameter=Settings}"/>
+                <!-- Employee Form -->
+                <employees:EmployeeFormView DataContext="{Binding EmployeeFormVM}"
+                                        Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
+                                                     Converter={StaticResource PageVisConverter}, ConverterParameter=EmployeeForm}"/>
+
+                <!-- Reports -->
+                <reports:AttendanceReportView DataContext="{Binding AttendanceReportVM}"
+                                            Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
+                                                         Converter={StaticResource PageVisConverter}, ConverterParameter=Reports}"/>
+
+                <!-- Settings -->
+                <settings:SettingsView DataContext="{Binding SettingsVM}"
+                                    Visibility="{Binding DataContext.CurrentPage, RelativeSource={RelativeSource AncestorType=Window},
+                                                 Converter={StaticResource PageVisConverter}, ConverterParameter=Settings}"/>
+            </Grid>
+
+            <!-- Footer -->
+            <ctrl:AppFooter Grid.Row="1" Margin="0,0,0,10"/>
         </Grid>
     </Grid>
 </Window>

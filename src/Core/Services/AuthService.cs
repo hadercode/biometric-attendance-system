@@ -19,7 +19,7 @@ namespace LectorHuellas.Core.Services
                 var user = await db.Users
                     .FirstOrDefaultAsync(u => u.Username.ToLower() == username.ToLower() && u.Password == password);
 
-                if (user != null && user.Status == "Habilitado")
+                if (user != null && user.Status == 1)
                 {
                     return user;
                 }

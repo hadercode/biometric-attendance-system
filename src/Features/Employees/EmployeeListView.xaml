@@ -35,7 +35,7 @@
                            FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
 
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Button Style="{StaticResource PrimaryButton}"
                         Command="{Binding DataContext.NewEmployeeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                         Margin="0,0,8,0">

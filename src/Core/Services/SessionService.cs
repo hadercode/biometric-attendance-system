@@ -12,7 +12,7 @@ namespace LectorHuellas.Core.Services
             {
                 UserId = user.Id,
                 Username = user.Username,
-                FullName = user.FullName,
+                FullName = user.FirstName + " " + user.LastName,
                 RolId = user.RolId
             };
         }

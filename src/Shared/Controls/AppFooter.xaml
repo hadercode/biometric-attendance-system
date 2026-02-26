@@ -1,0 +1,23 @@
+<UserControl x:Class="LectorHuellas.Shared.Controls.AppFooter"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="FooterControl">
+    <Border Padding="12,10" Background="Transparent">
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12.5" Foreground="{DynamicResource TextPrimaryBrush}">
+            <Run Text="© "/>
+            <Run Text="{Binding CurrentYear, ElementName=FooterControl}" FontWeight="SemiBold"/>
+            <Run Text=" Grupo Serex | Desarrollado por el "/>
+            <Run Text="Departamento TIC" FontWeight="SemiBold"/>
+            <Run Text=" | "/>
+            <Hyperlink Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" TextDecorations="None" Click="Documentation_Click">
+                <Run Text="Documentación"/>
+            </Hyperlink>
+            <Run Text=" • "/>
+            <Hyperlink Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" TextDecorations="None" Click="About_Click">
+                <Run Text="Acerca de"/>
+            </Hyperlink>
+            <Run Text=" | "/>
+            <Run Text="v1.0.0"/>
+        </TextBlock>
+    </Border>
+</UserControl>
