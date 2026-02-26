@@ -115,17 +115,33 @@ namespace LectorHuellas.Features.Attendance
 
                     if (result.HasValue && !result.Value.NoMatch)
                     {
-                        ShowCard = false; // Briefly hide to trigger animation/refresh if needed
-                        IdentifiedEmployee = result.Value.Employee;
-                        AttendanceTypeBadge = result.Value.Type == AttendanceType.CheckIn ? "ENTRADA REGISTRADA" : "SALIDA REGISTRADA";
-                        StatusMessage = $"¡Hola {result.Value.Employee.FirstNames}!";
-                        StatusMessageColor = (Color)ColorConverter.ConvertFromString("#00B894"); // Success
-                        ShowCard = true;
+                        if (result.Value.IsCooldownActive)
+                        {
+                            // Cooldown active: Avoid duplicate recording
+                            ShowCard = false;
+                            StatusMessage = $"{result.Value.Employee.FirstNames}, usted ya ha chequeado.";
+                            StatusMessageColor = (Color)ColorConverter.ConvertFromString("#F39C12"); // Warning Orange
+                            
+                            await Task.Delay(3000, ct); // Show warning for 3s
+                            
+                            StatusMessage = "Listo. Coloque su dedo para marcar.";
+                            StatusMessageColor = Colors.White;
+                        }
+                        else
+                        {
+                            // Successful new recording
+                            ShowCard = false; // Briefly hide to trigger animation/refresh if needed
+                            IdentifiedEmployee = result.Value.Employee;
+                            AttendanceTypeBadge = result.Value.Type == AttendanceType.CheckIn ? "ENTRADA REGISTRADA" : "SALIDA REGISTRADA";
+                            StatusMessage = $"¡Hola {result.Value.Employee.FirstNames}!";
+                            StatusMessageColor = (Color)ColorConverter.ConvertFromString("#00B894"); // Success
+                            ShowCard = true;
 
-                        await RefreshHistoryAsync();
+                            await RefreshHistoryAsync();
 
-                        // Auto-hide card after 4 seconds, but don't block the loop
-                        _ = ResetSuccessStateAfterDelay(4000);
+                            // Auto-hide card after 4 seconds, but don't block the loop
+                            _ = ResetSuccessStateAfterDelay(4000);
+                        }
                     }
                     else if (result.HasValue && result.Value.NoMatch)
                     {
@@ -206,26 +222,34 @@ namespace LectorHuellas.Features.Attendance
                 
                 if (result.HasValue && !result.Value.NoMatch)
                 {
-                    IdentifiedEmployee = result.Value.Employee;
-                    AttendanceTypeBadge = result.Value.Type == AttendanceType.CheckIn ? "ENTRADA REGISTRADA" : "SALIDA REGISTRADA";
-                    StatusMessage = "¡Bienvenido!";
-                    StatusMessageColor = (Color)ColorConverter.ConvertFromString("#00B894"); // Success
-                    ShowCard = true;
+                    if (result.Value.IsCooldownActive)
+                    {
+                        StatusMessage = $"{result.Value.Employee.FirstNames}, usted ya ha chequeado.";
+                        StatusMessageColor = (Color)ColorConverter.ConvertFromString("#F39C12"); // Warning Orange
+                    }
+                    else
+                    {
+                        IdentifiedEmployee = result.Value.Employee;
+                        AttendanceTypeBadge = result.Value.Type == AttendanceType.CheckIn ? "ENTRADA REGISTRADA" : "SALIDA REGISTRADA";
+                        StatusMessage = "¡Bienvenido!";
+                        StatusMessageColor = (Color)ColorConverter.ConvertFromString("#00B894"); // Success
+                        ShowCard = true;
 
-                    await RefreshHistoryAsync();
+                        await RefreshHistoryAsync();
 
-                    // Auto-hide card after 5 seconds
-                    _ = Task.Run(async () => {
-                        await Task.Delay(5000);
-                        ShowCard = false;
-                        await Task.Delay(500); // Animation delay
-                        
-                        await App.Current.Dispatcher.InvokeAsync(() => {
-                            IdentifiedEmployee = null;
-                            StatusMessage = "Coloque su dedo en el lector para marcar asistencia";
-                            StatusMessageColor = Colors.White;
+                        // Auto-hide card after 5 seconds
+                        _ = Task.Run(async () => {
+                            await Task.Delay(5000);
+                            ShowCard = false;
+                            await Task.Delay(500); // Animation delay
+                            
+                            await App.Current.Dispatcher.InvokeAsync(() => {
+                                IdentifiedEmployee = null;
+                                StatusMessage = "Coloque su dedo en el lector para marcar asistencia";
+                                StatusMessageColor = Colors.White;
+                            });
                         });
-                    });
+                    }
                 }
                 else if (result.HasValue && result.Value.NoMatch)
                 {

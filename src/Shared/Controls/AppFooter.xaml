@@ -17,7 +17,7 @@
                 <Run Text="Acerca de"/>
             </Hyperlink>
             <Run Text=" | "/>
-            <Run Text="v1.0.0"/>
+            <Run Text="v2.1.0"/>
         </TextBlock>
     </Border>
 </UserControl>

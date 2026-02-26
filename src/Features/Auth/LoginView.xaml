@@ -43,11 +43,6 @@
                 <!-- Login Button -->
                 <Button Style="{StaticResource PrimaryButton}" Content="Iniciar Sesión"
                         Command="{Binding LoginCommand}" Padding="0,14" Margin="0,0,0,16"/>
-
-                <!-- Back Button -->
-                <Button x:Name="btnAttendance" Style="{StaticResource SecondaryButton}" Content="Regresar a Asistencia"
-                        Command="{Binding BackCommand}" Padding="0,10" BorderThickness="0" Background="Transparent"
-                        Foreground="{DynamicResource TextSecondaryBrush}"/>
             </StackPanel>
         </Border>
     </Grid>
